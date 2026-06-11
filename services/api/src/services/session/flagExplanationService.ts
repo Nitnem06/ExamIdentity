@@ -9,6 +9,7 @@ import { sessionRepository } from '../../data'
 import type {
   AccommodationType,
   FlagExplanation,
+  FlagSignalInput,
   RecommendedAction,
   SessionFlagExplanations,
 } from '@examidentity/shared-types'
@@ -125,9 +126,10 @@ function buildLocalExplanations(
   studentDid: string,
   examId: string,
   accommodation: AccommodationType,
+  signals: RawSignal[],
 ): SessionFlagExplanations {
   const generatedAt = new Date().toISOString()
-  const explanations: FlagExplanation[] = DEMO_SIGNALS.map((sig, i) => {
+  const explanations: FlagExplanation[] = signals.map((sig, i) => {
     const adjusted = adjustedThreshold(sig.type, accommodation)
     const policy = BASE_THRESHOLDS[sig.type]
     const ratio = adjusted > 0 ? sig.observedValue / adjusted : sig.observedValue
@@ -228,5 +230,71 @@ export async function getSessionExplanations(
     // fall through to local builder
   }
 
-  return buildLocalExplanations(sessionId, studentDid, examId, accommodation)
+  return buildLocalExplanations(sessionId, studentDid, examId, accommodation, DEMO_SIGNALS)
+}
+
+
+// ---- Event-driven explanations (Phase 4) ----------------------------------
+
+const FLAG_META: Record<FlagType, { unit: string; title: string; code: string }> = {
+  GAZE_AWAY: { unit: 'seconds', title: 'Looked away from screen', code: 'GAZE_OFFSCREEN_DURATION' },
+  TYPING_IDENTITY_DRIFT: {
+    unit: 'drift',
+    title: 'Typing rhythm differs from baseline',
+    code: 'KEYSTROKE_DRIFT',
+  },
+  MULTIPLE_VOICES: { unit: 'voices', title: 'Additional voice detected', code: 'ADDITIONAL_VOICE' },
+  SYSTEMIC_EVENT: { unit: 'events', title: 'Platform-wide anomaly', code: 'SYSTEMIC_ANOMALY' },
+  DEVICE_INTEGRITY: {
+    unit: 'violations',
+    title: 'Device integrity concern',
+    code: 'DEVICE_INTEGRITY',
+  },
+}
+
+function enrich(input: FlagSignalInput): RawSignal {
+  const meta = FLAG_META[input.type as FlagType] ?? FLAG_META.SYSTEMIC_EVENT
+  return {
+    type: input.type as FlagType,
+    startedAt: input.startedAt,
+    endedAt: input.endedAt,
+    observedValue: input.observedValue,
+    baselineValue: input.baselineValue,
+    confidence: input.confidence ?? 0.8,
+    unit: meta.unit,
+    title: meta.title,
+    code: meta.code,
+  }
+}
+
+/**
+ * Build explanations from caller-supplied behavioural signals. Tries the
+ * scoring service's /api/explanation/build, then falls back to the local
+ * deterministic builder.
+ */
+export async function getExplanationsForSignals(
+  sessionId: string,
+  studentDid: string,
+  examId: string,
+  accommodation: AccommodationType,
+  inputs: FlagSignalInput[],
+): Promise<SessionFlagExplanations> {
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 2500)
+    const res = await fetch(`${config.scoringServiceUrl}/api/explanation/build`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({ sessionId, studentDid, examId, accommodation, signals: inputs }),
+    })
+    clearTimeout(timeout)
+    if (res.ok) {
+      return (await res.json()) as SessionFlagExplanations
+    }
+  } catch {
+    // fall through to local builder
+  }
+
+  return buildLocalExplanations(sessionId, studentDid, examId, accommodation, inputs.map(enrich))
 }

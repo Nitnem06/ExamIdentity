@@ -11,6 +11,8 @@ import credentialBridgeRoutes from './routes/credentialBridge'
 import identityRoutes from './routes/identity'
 import authRoutes from './routes/auth'
 import sessionRoutes from './routes/sessions'
+import disputeRoutes from './routes/disputes'
+import { deleteExpiredEvidence } from './services/escrow/escrowService'
 
 export function buildServer() {
   const app = Fastify({
@@ -29,6 +31,19 @@ export function buildServer() {
   app.register(jwt, {
     secret: config.jwtSecret,
     sign: { expiresIn: config.jwtExpiresIn },
+  })
+
+  // Catch-all body parser: tolerate action POSTs that arrive with no body or a
+  // non-JSON content type (e.g. state-transition endpoints). The built-in
+  // application/json parser still handles JSON requests.
+  app.addContentTypeParser('*', { parseAs: 'buffer' }, (_req, body, done) => {
+    const buf = body as Buffer
+    if (!buf || buf.length === 0) return done(null, undefined)
+    try {
+      done(null, JSON.parse(buf.toString()))
+    } catch {
+      done(null, buf.toString())
+    }
   })
 
   // Liveness probe.
@@ -53,6 +68,7 @@ export function buildServer() {
   app.register(identityRoutes, { prefix: '/api' })
   app.register(authRoutes, { prefix: '/api' })
   app.register(sessionRoutes, { prefix: '/api' })
+  app.register(disputeRoutes, { prefix: '/api' })
 
   return app
 }
@@ -60,7 +76,21 @@ export function buildServer() {
 async function start() {
   const app = buildServer()
 
+  // Category B retention: scrub evidence past its 90-day window daily.
+  const retentionTimer = setInterval(
+    () => {
+      void deleteExpiredEvidence()
+        .then((ids) => {
+          if (ids.length > 0) app.log.info(`Deleted ${ids.length} expired evidence record(s)`)
+        })
+        .catch((err) => app.log.error(err))
+    },
+    24 * 60 * 60 * 1000,
+  )
+  retentionTimer.unref?.()
+
   const shutdown = async () => {
+    clearInterval(retentionTimer)
     await app.close()
     await closePool()
     process.exit(0)

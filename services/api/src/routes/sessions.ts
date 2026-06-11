@@ -3,6 +3,7 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
 import type {
   AuthPrincipal,
   CreateSessionRequest,
+  EventIngestionRequest,
   SessionState,
   SessionStateTransitionRequest,
 } from '@examidentity/shared-types'
@@ -13,6 +14,7 @@ import {
   createSession,
   transitionSession,
 } from '../services/session/sessionService'
+import { ingestEvents } from '../services/session/eventService'
 
 interface SessionParams {
   sessionId: string
@@ -95,6 +97,22 @@ const sessionRoutes: FastifyPluginAsync = async (app) => {
       if (!toState) return reply.code(400).send({ error: 'toState is required' })
       try {
         return await transitionSession(session.sessionId, toState)
+      } catch (err) {
+        return handleError(err, reply)
+      }
+    },
+  )
+
+  // POST /api/sessions/:sessionId/events — ingest behavioural signals.
+  app.post<{ Params: SessionParams; Body: EventIngestionRequest }>(
+    '/sessions/:sessionId/events',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const session = await loadOwned(request, reply)
+      if (!session) return reply
+      const body = request.body ?? ({ signals: [] } as EventIngestionRequest)
+      try {
+        return await ingestEvents(session.sessionId, body)
       } catch (err) {
         return handleError(err, reply)
       }

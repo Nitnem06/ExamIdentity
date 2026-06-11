@@ -7,6 +7,16 @@
 import type {
   CredentialRecord,
   CredentialRepository,
+  DisputeRecord,
+  DisputeRepository,
+  DisputeResolution,
+  EscrowRecord,
+  EscrowRepository,
+  FlagRecord,
+  FlagRepository,
+  NewDispute,
+  NewEscrow,
+  NewFlag,
   NewSession,
   NewStudent,
   SessionRecord,
@@ -167,5 +177,83 @@ export const mockStudentRepository: StudentRepository = {
   },
   async findByDid(did) {
     return STUDENTS.find((s) => s.did === did)
+  },
+}
+
+// ---- Flag / escrow / dispute in-memory stores -----------------------------
+
+const FLAGS: FlagRecord[] = []
+const ESCROWS: Array<EscrowRecord & { encryptedPayload: string }> = []
+const DISPUTES: DisputeRecord[] = []
+
+export const mockFlagRepository: FlagRepository = {
+  async create(input: NewFlag) {
+    const record: FlagRecord = {
+      ...input,
+      disputeStatus: input.disputeStatus ?? 'NOT_DISPUTED',
+    }
+    FLAGS.push(record)
+    return record
+  },
+  async listBySession(sessionRef) {
+    return FLAGS.filter((f) => f.sessionRef === sessionRef)
+  },
+  async findById(flagId) {
+    return FLAGS.find((f) => f.flagId === flagId)
+  },
+  async updateDisputeStatus(flagId, disputeStatus) {
+    const f = FLAGS.find((x) => x.flagId === flagId)
+    if (f) f.disputeStatus = disputeStatus
+  },
+}
+
+export const mockEscrowRepository: EscrowRepository = {
+  async create(input: NewEscrow) {
+    const record: EscrowRecord & { encryptedPayload: string } = {
+      escrowId: input.escrowId,
+      sessionRef: input.sessionRef,
+      studentKeyRef: input.studentKeyRef,
+      platformKeyRef: input.platformKeyRef,
+      createdAt: new Date().toISOString(),
+      expiresAt: input.expiresAt,
+      encryptedPayload: input.encryptedPayload,
+    }
+    ESCROWS.push(record)
+    return record
+  },
+  async deleteExpired(now = new Date().toISOString()) {
+    const deleted: string[] = []
+    for (const e of ESCROWS) {
+      if (!e.deletedAt && e.expiresAt < now) {
+        e.deletedAt = now
+        e.encryptedPayload = ''
+        deleted.push(e.escrowId)
+      }
+    }
+    return deleted
+  },
+  async countActive() {
+    return ESCROWS.filter((e) => !e.deletedAt).length
+  },
+}
+
+export const mockDisputeRepository: DisputeRepository = {
+  async create(input: NewDispute) {
+    const record: DisputeRecord = { ...input, createdAt: new Date().toISOString() }
+    DISPUTES.push(record)
+    return record
+  },
+  async findById(disputeId) {
+    return DISPUTES.find((d) => d.disputeId === disputeId)
+  },
+  async resolve(disputeId, resolution: DisputeResolution) {
+    const d = DISPUTES.find((x) => x.disputeId === disputeId)
+    if (!d) return undefined
+    d.status = resolution.status
+    if (resolution.tier !== undefined) d.tier = resolution.tier
+    if (resolution.reviewerId) d.reviewerId = resolution.reviewerId
+    if (resolution.reviewerReasoning) d.reviewerReasoning = resolution.reviewerReasoning
+    d.resolvedAt = resolution.resolvedAt ?? new Date().toISOString()
+    return d
   },
 }

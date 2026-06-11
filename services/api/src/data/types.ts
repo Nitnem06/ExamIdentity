@@ -91,3 +91,109 @@ export interface StudentRepository {
   create(input: NewStudent): Promise<StudentRecord>
   findByDid(did: string): Promise<StudentRecord | undefined>
 }
+
+// ---- Flags (Phase 4) ------------------------------------------------------
+
+export interface FlagRecord {
+  flagId: string
+  /** The exam_sessions.session_id string this flag belongs to. */
+  sessionRef: string
+  type: string
+  severity: string
+  timestampInExam: string
+  durationSeconds?: number
+  explanation: string
+  autoResolved: boolean
+  disputeStatus: string
+}
+
+export interface NewFlag {
+  flagId: string
+  sessionRef: string
+  type: string
+  severity: string
+  timestampInExam: string
+  durationSeconds?: number
+  explanation: string
+  autoResolved: boolean
+  disputeStatus?: string
+}
+
+export interface FlagRepository {
+  create(input: NewFlag): Promise<FlagRecord>
+  listBySession(sessionRef: string): Promise<FlagRecord[]>
+  findById(flagId: string): Promise<FlagRecord | undefined>
+  updateDisputeStatus(flagId: string, disputeStatus: string): Promise<void>
+}
+
+// ---- Evidence escrow (Phase 4, Category B) --------------------------------
+
+export interface EscrowRecord {
+  escrowId: string
+  sessionRef: string
+  studentKeyRef: string
+  platformKeyRef: string
+  createdAt: string
+  expiresAt: string
+  deletedAt?: string
+}
+
+export interface NewEscrow {
+  escrowId: string
+  sessionRef: string
+  encryptedPayload: string
+  studentKeyRef: string
+  platformKeyRef: string
+  expiresAt: string
+}
+
+export interface EscrowRepository {
+  create(input: NewEscrow): Promise<EscrowRecord>
+  /** Mark all rows past their expiry as deleted; returns deleted escrow ids. */
+  deleteExpired(now?: string): Promise<string[]>
+  countActive(): Promise<number>
+}
+
+// ---- Disputes (Phase 5) ---------------------------------------------------
+
+export interface DisputeRecord {
+  disputeId: string
+  flagId: string
+  studentDid: string
+  reason: string
+  context?: string
+  tier: number
+  status: string
+  aiRecommendation?: string
+  aiConfidence?: number
+  reviewerId?: string
+  reviewerReasoning?: string
+  resolvedAt?: string
+  createdAt: string
+}
+
+export interface NewDispute {
+  disputeId: string
+  flagId: string
+  studentDid: string
+  reason: string
+  context?: string
+  tier: number
+  status: string
+  aiRecommendation?: string
+  aiConfidence?: number
+}
+
+export interface DisputeResolution {
+  status: string
+  tier?: number
+  reviewerId?: string
+  reviewerReasoning?: string
+  resolvedAt?: string
+}
+
+export interface DisputeRepository {
+  create(input: NewDispute): Promise<DisputeRecord>
+  findById(disputeId: string): Promise<DisputeRecord | undefined>
+  resolve(disputeId: string, resolution: DisputeResolution): Promise<DisputeRecord | undefined>
+}
