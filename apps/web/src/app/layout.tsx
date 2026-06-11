@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ExamIdentity",
   description:
-    "Self-sovereign, privacy-preserving exam integrity: explainable flags, portable credentials, and public transparency.",
+    "Self-sovereign, privacy-preserving exam integrity with explainable flags, portable credentials, and public transparency.",
 };
 
 export default function RootLayout({

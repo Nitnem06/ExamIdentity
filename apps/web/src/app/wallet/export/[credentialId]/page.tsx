@@ -1,23 +1,29 @@
 // apps/web/src/app/wallet/export/[credentialId]/page.tsx
 import type { Metadata } from 'next'
-import { Nav }                  from '@/components/shared/Nav'
-import { Footer }               from '@/components/shared/Footer'
+import { Nav }                   from '@/components/shared/Nav'
+import { Footer }                from '@/components/shared/Footer'
 import { CredentialBridgePanel } from '@/components/wallet/CredentialBridgePanel'
 
+// ✅ params is a Promise in Next.js 15+
 interface PageProps {
-  params: { credentialId: string }
+  params: Promise<{ credentialId: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const isDemo = params.credentialId === 'demo'
+  const { credentialId } = await params  // ✅ awaited
+
+  const isDemo = credentialId === 'demo'
   return {
-    title: isDemo ? 'Export Demo — Credential Wallet' : `Export Credential ${params.credentialId.slice(0, 8)}`,
+    title: isDemo
+      ? 'Export Demo — Credential Wallet'
+      : `Export Credential ${credentialId.slice(0, 8)}`,
     description: 'Export your ExamIdentity verifiable credential to your preferred format.',
   }
 }
 
-export default function CredentialExportPage({ params }: PageProps) {
-  const { credentialId } = params
+// ✅ Must be async to await params
+export default async function CredentialExportPage({ params }: PageProps) {
+  const { credentialId } = await params  // ✅ awaited
   const isDemo = credentialId === 'demo'
 
   return (
@@ -81,9 +87,11 @@ export default function CredentialExportPage({ params }: PageProps) {
             >
               <span style={{ color: 'var(--color-amber)', fontSize: 16 }}>◈</span>
               <span>
-                <span className="font-semibold" style={{ color: 'var(--color-amber-glow)' }}>Demo mode. </span>
-                This page uses a sample credential. In production, you'd land here from your exam history
-                after authentication.
+                <span className="font-semibold" style={{ color: 'var(--color-amber-glow)' }}>
+                  Demo mode.{' '}
+                </span>
+                This page uses a sample credential. In production, you'd land here from your exam
+                history after authentication.
               </span>
             </div>
           )}
@@ -111,12 +119,12 @@ export default function CredentialExportPage({ params }: PageProps) {
               {
                 icon:  '📋',
                 title: 'Publicly verifiable',
-                body:  'Anyone with the QR link or VC JSON can verify this credential against the issuer\'s DID Document.',
+                body:  "Anyone with the QR link or VC JSON can verify this credential against the issuer's DID Document.",
               },
               {
                 icon:  '⏳',
                 title: 'No expiry by default',
-                body:  'Credentials don\'t expire unless the institution sets a policy. Check the expirationDate field in the VC.',
+                body:  "Credentials don't expire unless the institution sets a policy. Check the expirationDate field in the VC.",
               },
             ].map(({ icon, title, body }) => (
               <div
