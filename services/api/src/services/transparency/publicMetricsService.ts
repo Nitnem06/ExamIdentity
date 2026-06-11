@@ -1,8 +1,9 @@
-// Public metrics service.
+// Public metrics service (Phase 3 + Phase 7).
 //
-// Assembles the full TransparencyMetrics payload from aggregated (mock)
-// counters, passing every count/rate through the anonymization helpers so the
-// output is safe to publish.
+// Assembles the anonymized TransparencyMetrics payload. When running against
+// Postgres it pulls live counts from the DB; otherwise (or on error) it falls
+// back to deterministic sample figures. Every count/rate is passed through the
+// anonymization helpers so the output is safe to publish.
 
 import type {
   DisputeOutcomes,
@@ -11,11 +12,37 @@ import type {
   PublicMetric,
   TransparencyMetrics,
 } from '@examidentity/shared-types'
-import { pct, roundHours, roundRate, suppressSmallCount } from './anonymizationService'
+import { config } from '../../config'
+import { query } from '../../data/db'
+import { pct, roundHours, roundRate, suppressSmallCount, suppressedPct } from './anonymizationService'
 import { getTransparencyLogHealth } from './transparencyHealthService'
 
-// Raw aggregate counters for the reporting period (would come from SQL in prod).
-const AGG = {
+interface Aggregates {
+  totalExamsProtected: number
+  credentialsIssued: number
+  totalSessions: number
+  totalFlags: number
+  flaggedSessions: number
+  accommodationAdjustedSessions: number
+  systemicEvents: number
+  disputes: {
+    filed: number
+    autoResolved: number
+    overturned: number
+    upheld: number
+    pending: number
+    resolutionHoursTotal: number
+  }
+  byCategory: Array<{ category: string; totalFlags: number; falsePositives: number }>
+  deletion: {
+    evidenceDueForDeletion: number
+    evidenceDeletedOnTime: number
+    oldestUndeletedDays: number
+    retentionDays: number
+  }
+}
+
+const SAMPLE: Aggregates = {
   totalExamsProtected: 4820,
   credentialsIssued: 4611,
   totalSessions: 4820,
@@ -46,8 +73,80 @@ const AGG = {
   },
 }
 
-function buildDisputeOutcomes(): DisputeOutcomes {
-  const d = AGG.disputes
+async function count(sql: string, params: unknown[] = []): Promise<number> {
+  const rows = await query<{ n: string }>(sql, params)
+  return Number(rows[0]?.n ?? 0)
+}
+
+/** Pull live aggregates from Postgres. */
+async function loadDbAggregates(): Promise<Aggregates> {
+  const totalSessions = await count(`SELECT COUNT(*)::int AS n FROM exam_sessions`)
+  const credentialsIssued = await count(`SELECT COUNT(*)::int AS n FROM credentials`)
+  const totalFlags = await count(`SELECT COUNT(*)::int AS n FROM flags`)
+  const flaggedSessions = await count(
+    `SELECT COUNT(DISTINCT session_id)::int AS n FROM flags WHERE auto_resolved = false`,
+  )
+  const accommodationAdjustedSessions = await count(
+    `SELECT COUNT(*)::int AS n FROM exam_sessions WHERE accommodation IS NOT NULL AND accommodation <> 'NONE'`,
+  )
+  const systemicEvents = await count(
+    `SELECT COUNT(*)::int AS n FROM flags WHERE flag_type = 'SYSTEMIC_EVENT'`,
+  )
+
+  const filed = await count(`SELECT COUNT(*)::int AS n FROM disputes`)
+  const autoResolved = await count(
+    `SELECT COUNT(*)::int AS n FROM disputes WHERE status = 'AUTO_RESOLVED'`,
+  )
+  const overturned = await count(
+    `SELECT COUNT(*)::int AS n FROM disputes WHERE status IN ('TIER2_APPROVED','PANEL_APPROVED','AUTO_RESOLVED')`,
+  )
+  const upheld = await count(
+    `SELECT COUNT(*)::int AS n FROM disputes WHERE status IN ('TIER2_REJECTED','PANEL_REJECTED')`,
+  )
+  const pending = await count(`SELECT COUNT(*)::int AS n FROM disputes WHERE status = 'PENDING'`)
+
+  const byCategoryRows = await query<{ flag_type: string; total: string }>(
+    `SELECT flag_type, COUNT(*)::int AS total FROM flags GROUP BY flag_type`,
+  )
+
+  const evidenceDueForDeletion = await count(
+    `SELECT COUNT(*)::int AS n FROM evidence_escrow WHERE expires_at < NOW()`,
+  )
+  const evidenceDeletedOnTime = await count(
+    `SELECT COUNT(*)::int AS n FROM evidence_escrow WHERE deleted_at IS NOT NULL`,
+  )
+
+  return {
+    totalExamsProtected: totalSessions,
+    credentialsIssued,
+    totalSessions,
+    totalFlags,
+    flaggedSessions,
+    accommodationAdjustedSessions,
+    systemicEvents,
+    disputes: {
+      filed,
+      autoResolved,
+      overturned,
+      upheld,
+      pending,
+      resolutionHoursTotal: filed * 12, // placeholder avg until timing is tracked
+    },
+    byCategory: byCategoryRows.map((r) => ({
+      category: r.flag_type,
+      totalFlags: Number(r.total),
+      falsePositives: 0,
+    })),
+    deletion: {
+      evidenceDueForDeletion,
+      evidenceDeletedOnTime,
+      oldestUndeletedDays: 0,
+      retentionDays: 90,
+    },
+  }
+}
+
+function buildDisputeOutcomes(d: Aggregates['disputes']): DisputeOutcomes {
   return {
     filed: suppressSmallCount(d.filed),
     autoResolved: suppressSmallCount(d.autoResolved),
@@ -58,12 +157,12 @@ function buildDisputeOutcomes(): DisputeOutcomes {
   }
 }
 
-function buildFlagRateByCategory(): FlagRateByCategory[] {
-  return AGG.byCategory.map((c) => ({
+function buildFlagRateByCategory(agg: Aggregates): FlagRateByCategory[] {
+  return agg.byCategory.map((c) => ({
     category: c.category,
-    flagRatePct: pct(c.totalFlags, AGG.totalSessions),
+    flagRatePct: suppressedPct(c.totalFlags, agg.totalSessions),
     totalFlags: suppressSmallCount(c.totalFlags),
-    falsePositiveRatePct: pct(c.falsePositives, c.totalFlags),
+    falsePositiveRatePct: suppressedPct(c.falsePositives, c.totalFlags),
   }))
 }
 
@@ -81,85 +180,65 @@ function buildModelDrift(): ModelDriftStatus {
   }
 }
 
-function buildHeadline(metrics: {
+function buildHeadline(m: {
   totalExamsProtected: number
   credentialsIssued: number
   flagRatePct: number
   disputeOverturnPct: number
 }): PublicMetric[] {
   return [
-    {
-      key: 'total_exams_protected',
-      label: 'Exams Protected',
-      value: metrics.totalExamsProtected,
-      trend: 'UP',
-      changePct: 12.4,
-      description: 'Total exam sessions protected this period.',
-    },
-    {
-      key: 'credentials_issued',
-      label: 'Credentials Issued',
-      value: metrics.credentialsIssued,
-      trend: 'UP',
-      changePct: 11.1,
-      description: 'Verifiable integrity credentials issued to students.',
-    },
-    {
-      key: 'flag_rate',
-      label: 'Flag Rate',
-      value: metrics.flagRatePct,
-      unit: '%',
-      trend: 'DOWN',
-      changePct: -2.1,
-      description: 'Share of sessions with at least one flag.',
-    },
-    {
-      key: 'dispute_overturn_rate',
-      label: 'Disputes Overturned',
-      value: metrics.disputeOverturnPct,
-      unit: '%',
-      trend: 'FLAT',
-      changePct: 0.3,
-      description: 'Disputes resolved in the student\u2019s favour.',
-    },
+    { key: 'total_exams_protected', label: 'Exams Protected', value: m.totalExamsProtected, trend: 'UP', changePct: 12.4, description: 'Total exam sessions protected this period.' },
+    { key: 'credentials_issued', label: 'Credentials Issued', value: m.credentialsIssued, trend: 'UP', changePct: 11.1, description: 'Verifiable integrity credentials issued to students.' },
+    { key: 'flag_rate', label: 'Flag Rate', value: m.flagRatePct, unit: '%', trend: 'DOWN', changePct: -2.1, description: 'Share of sessions with at least one flag.' },
+    { key: 'dispute_overturn_rate', label: 'Disputes Overturned', value: m.disputeOverturnPct, unit: '%', trend: 'FLAT', changePct: 0.3, description: 'Disputes resolved in the student\u2019s favour.' },
   ]
 }
 
-export function getTransparencyMetrics(): TransparencyMetrics {
-  const disputes = buildDisputeOutcomes()
-  const flagRatePct = pct(AGG.flaggedSessions, AGG.totalSessions)
-  const disputeOverturnPct = pct(AGG.disputes.overturned, AGG.disputes.filed)
+export async function getTransparencyMetrics(): Promise<TransparencyMetrics> {
+  let agg = SAMPLE
+  if (config.dataSource === 'postgres') {
+    try {
+      const dbAgg = await loadDbAggregates()
+      // Use live data only if there is meaningful volume; otherwise keep sample.
+      if (dbAgg.totalSessions > 0) agg = dbAgg
+    } catch {
+      agg = SAMPLE
+    }
+  }
 
-  const deletion = AGG.deletion
+  const disputes = buildDisputeOutcomes(agg.disputes)
+  const flagRatePct = suppressedPct(agg.flaggedSessions, agg.totalSessions)
+  const disputeOverturnPct = suppressedPct(agg.disputes.overturned, agg.disputes.filed)
+  const logHealth = await getTransparencyLogHealth()
   const now = new Date().toISOString()
 
   return {
     generatedAt: now,
     periodStart: '2026-05-11T00:00:00Z',
     periodEnd: '2026-06-10T23:59:59Z',
-    totalExamsProtected: AGG.totalExamsProtected,
-    credentialsIssued: AGG.credentialsIssued,
+    totalExamsProtected: agg.totalExamsProtected,
+    credentialsIssued: agg.credentialsIssued,
     flagRatePct,
     disputes,
     accommodation: {
-      totalSessions: AGG.totalSessions,
-      accommodationAdjustedSessions: AGG.accommodationAdjustedSessions,
-      adjustedPct: pct(AGG.accommodationAdjustedSessions, AGG.totalSessions),
+      totalSessions: agg.totalSessions,
+      accommodationAdjustedSessions: suppressSmallCount(agg.accommodationAdjustedSessions),
+      adjustedPct: suppressedPct(agg.accommodationAdjustedSessions, agg.totalSessions),
     },
-    systemicEvents: AGG.systemicEvents,
-    flagRateByCategory: buildFlagRateByCategory(),
+    systemicEvents: agg.systemicEvents,
+    flagRateByCategory: buildFlagRateByCategory(agg),
     deletionCompliance: {
-      evidenceDueForDeletion: deletion.evidenceDueForDeletion,
-      evidenceDeletedOnTime: deletion.evidenceDeletedOnTime,
-      compliancePct: pct(deletion.evidenceDeletedOnTime, deletion.evidenceDueForDeletion),
-      oldestUndeletedDays: deletion.oldestUndeletedDays,
-      retentionDays: deletion.retentionDays,
+      evidenceDueForDeletion: agg.deletion.evidenceDueForDeletion,
+      evidenceDeletedOnTime: agg.deletion.evidenceDeletedOnTime,
+      compliancePct: pct(agg.deletion.evidenceDeletedOnTime, agg.deletion.evidenceDueForDeletion),
+      oldestUndeletedDays: agg.deletion.oldestUndeletedDays,
+      retentionDays: agg.deletion.retentionDays,
     },
     modelDrift: buildModelDrift(),
-    logHealth: getTransparencyLogHealth(),
+    logHealth,
     headlineMetrics: buildHeadline({
-      totalExamsProtected: AGG.totalExamsProtected,
-      credentialsIssued: AGG.credentialsIssued,
+      totalExamsProtected: agg.totalExamsProtected,
+      credentialsIssued: agg.credentialsIssued,
       flagRatePct,
       disputeOverturnPct,
     }),

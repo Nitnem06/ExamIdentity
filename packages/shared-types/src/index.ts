@@ -193,3 +193,47 @@ export interface Dispute {
   resolvedAt?: string
   createdAt: string
 }
+
+// ---- University integrity report (Phase 6, Category C) --------------------
+
+export interface ReportFlag {
+  flagId: string
+  type: string
+  severity: string
+  disputeStatus: string
+  autoResolved: boolean
+}
+
+export interface ReportSession {
+  sessionId: string
+  examId: string
+  examName: string
+  state: string
+  integrityScoreBand?: 'HIGH' | 'MEDIUM' | 'LOW'
+  startedAt?: string
+  completedAt?: string
+  flagCount: number
+  flags: ReportFlag[]
+}
+
+export interface ReportCredential {
+  id: string
+  examName: string
+  integrityScoreBand: 'HIGH' | 'MEDIUM' | 'LOW'
+  status: string
+}
+
+/** Per-student institutional integrity report (owned by the university). */
+export interface StudentIntegrityReport {
+  studentDid: string
+  universityId: string
+  generatedAt: string
+  totals: {
+    sessions: number
+    flags: number
+    actionableFlags: number
+    credentialsIssued: number
+  }
+  sessions: ReportSession[]
+  credentials: ReportCredential[]
+}

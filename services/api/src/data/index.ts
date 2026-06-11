@@ -63,6 +63,7 @@ export const disputeRepository: DisputeRepository = usePostgres
 export type {
   SessionRecord,
   CredentialRecord,
+  NewCredential,
   StudentRecord,
   UniversityRecord,
   NewStudent,

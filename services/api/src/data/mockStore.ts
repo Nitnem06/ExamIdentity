@@ -132,6 +132,18 @@ export const mockCredentialRepository: CredentialRepository = {
   async findById(credentialId) {
     return CREDENTIALS.find((c) => c.credential.id === credentialId)
   },
+  async findByStudent(studentDid) {
+    return CREDENTIALS.filter((c) => c.credential.credentialSubject.id === studentDid)
+  },
+  async create(input) {
+    const record: CredentialRecord = {
+      credential: input.credential,
+      credentialHash: input.credentialHash,
+      status: input.status ?? 'ACTIVE',
+    }
+    CREDENTIALS.push(record)
+    return record
+  },
 }
 
 // ---- Identity fixtures + repositories -------------------------------------

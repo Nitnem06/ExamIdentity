@@ -2,6 +2,7 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
+import rateLimit from '@fastify/rate-limit'
 import { config } from './config'
 import { closePool } from './data/db'
 import { credentialRepository } from './data'
@@ -12,6 +13,7 @@ import identityRoutes from './routes/identity'
 import authRoutes from './routes/auth'
 import sessionRoutes from './routes/sessions'
 import disputeRoutes from './routes/disputes'
+import reportRoutes from './routes/reports'
 import { deleteExpiredEvidence } from './services/escrow/escrowService'
 
 export function buildServer() {
@@ -19,6 +21,12 @@ export function buildServer() {
     logger: {
       level: config.isProd ? 'info' : 'debug',
     },
+  })
+
+  // Rate limiting: 120 requests/minute per IP by default.
+  app.register(rateLimit, {
+    max: config.isProd ? 120 : 1000,
+    timeWindow: '1 minute',
   })
 
   // CORS for the Next.js web client.
@@ -69,6 +77,7 @@ export function buildServer() {
   app.register(authRoutes, { prefix: '/api' })
   app.register(sessionRoutes, { prefix: '/api' })
   app.register(disputeRoutes, { prefix: '/api' })
+  app.register(reportRoutes, { prefix: '/api' })
 
   return app
 }

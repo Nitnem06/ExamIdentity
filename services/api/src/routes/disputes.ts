@@ -13,6 +13,7 @@ import {
   reviewDispute,
   submitDispute,
 } from '../services/dispute/disputeService'
+import { disputeReviewSchema, disputeSubmissionSchema, validate } from '../validation/schemas'
 
 interface DisputeParams {
   disputeId: string
@@ -33,8 +34,10 @@ const disputeRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: authorizeRoles('student') },
     async (request, reply) => {
       const user = request.user as AuthPrincipal
+      const v = validate(disputeSubmissionSchema, request.body)
+      if (!v.ok) return reply.code(400).send({ error: v.error })
       try {
-        return await submitDispute(user.sub, request.body ?? ({} as DisputeSubmission))
+        return await submitDispute(user.sub, v.data)
       } catch (err) {
         return handleError(err, reply)
       }
@@ -47,8 +50,10 @@ const disputeRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: authorizeRoles('reviewer') },
     async (request, reply) => {
       const user = request.user as AuthPrincipal
+      const v = validate(disputeReviewSchema, request.body)
+      if (!v.ok) return reply.code(400).send({ error: v.error })
       try {
-        return await reviewDispute(request.params.disputeId, user.sub, request.body ?? ({} as DisputeReview))
+        return await reviewDispute(request.params.disputeId, user.sub, v.data)
       } catch (err) {
         return handleError(err, reply)
       }
@@ -61,8 +66,10 @@ const disputeRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: authorizeRoles('reviewer') },
     async (request, reply) => {
       const user = request.user as AuthPrincipal
+      const v = validate(disputeReviewSchema, request.body)
+      if (!v.ok) return reply.code(400).send({ error: v.error })
       try {
-        return await panelDispute(request.params.disputeId, user.sub, request.body ?? ({} as DisputeReview))
+        return await panelDispute(request.params.disputeId, user.sub, v.data)
       } catch (err) {
         return handleError(err, reply)
       }

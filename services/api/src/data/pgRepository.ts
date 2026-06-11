@@ -144,6 +144,35 @@ export const pgCredentialRepository: CredentialRepository = {
     )
     return rows[0] ? mapCredential(rows[0]) : undefined
   },
+  async findByStudent(studentDid) {
+    const rows = await query<CredentialRow>(
+      `SELECT credential_json, credential_hash, status
+       FROM credentials
+       WHERE student_did = $1
+       ORDER BY issued_at`,
+      [studentDid],
+    )
+    return rows.map(mapCredential)
+  },
+  async create(input) {
+    const c = input.credential
+    const rows = await query<CredentialRow>(
+      `INSERT INTO credentials (student_did, credential_type, credential_json, credential_hash, status)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (credential_hash) DO NOTHING
+       RETURNING credential_json, credential_hash, status`,
+      [
+        c.credentialSubject.id,
+        'ExamIntegrityCredential',
+        JSON.stringify(c),
+        input.credentialHash,
+        input.status ?? 'ACTIVE',
+      ],
+    )
+    return rows[0]
+      ? mapCredential(rows[0])
+      : { credential: c, credentialHash: input.credentialHash, status: input.status ?? 'ACTIVE' }
+  },
 }
 
 // ---- Universities ---------------------------------------------------------

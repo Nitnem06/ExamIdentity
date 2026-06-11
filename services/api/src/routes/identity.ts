@@ -8,6 +8,7 @@ import {
   toStudentProfile,
 } from '../services/identity/enrollmentService'
 import { authenticate } from '../auth/guards'
+import { enrollSchema, validate } from '../validation/schemas'
 
 interface DidParams {
   did: string
@@ -19,12 +20,10 @@ const identityRoutes: FastifyPluginAsync = async (app) => {
 
   // POST /api/enroll — create a student identity (did:key) + profile + token.
   app.post<{ Body: EnrollmentRequest }>('/enroll', async (request, reply) => {
-    const body = request.body ?? ({} as EnrollmentRequest)
-    if (!body.universityId) {
-      return reply.code(400).send({ error: 'universityId is required' })
-    }
+    const v = validate(enrollSchema, request.body)
+    if (!v.ok) return reply.code(400).send({ error: v.error })
     try {
-      const result = await enrollStudent(body)
+      const result = await enrollStudent(v.data)
       const token = app.jwt.sign({ sub: result.did, role: 'student' })
       return { ...result, token }
     } catch (err) {

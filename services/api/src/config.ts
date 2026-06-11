@@ -14,6 +14,8 @@ export const config = {
   scoringServiceUrl: process.env.SCORING_SERVICE_URL ?? 'http://localhost:8000',
   realtimeServiceUrl: process.env.REALTIME_SERVICE_URL ?? 'http://localhost:8080',
   platformDid: process.env.PLATFORM_DID ?? 'did:key:zPlatformDemo',
+  /** Hex Ed25519 private key the platform uses to sign issued credentials. */
+  platformPrivateKey: process.env.PLATFORM_PRIVATE_KEY ?? '',
   /** Key used to encrypt STANDARD-custody student private keys at rest. */
   platformEncryptionKey:
     process.env.PLATFORM_ENCRYPTION_KEY ?? 'dev-platform-encryption-key-change-me',
@@ -23,6 +25,8 @@ export const config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '12h',
   /** Shared secret to mint university/reviewer dev tokens (MVP only). */
   devAuthSecret: process.env.DEV_AUTH_SECRET ?? 'dev-auth-secret-change-me',
+  /** k-anonymity threshold for public metrics (counts/rates below this are suppressed). */
+  kAnonymity: num(process.env.K_ANONYMITY, 5),
   /** Base URL used when minting QR verification links. */
   publicBaseUrl: process.env.PUBLIC_BASE_URL ?? 'http://localhost:3001',
   /** Postgres connection string (matches infrastructure/docker/docker-compose.yml). */

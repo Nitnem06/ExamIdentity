@@ -35,6 +35,12 @@ export interface CredentialRecord {
   credentialHash: string
 }
 
+export interface NewCredential {
+  credential: ExamCredential
+  credentialHash: string
+  status?: 'ACTIVE' | 'REVOKED'
+}
+
 export interface UniversityRecord {
   universityId: string
   name: string
@@ -80,6 +86,8 @@ export interface SessionRepository {
 export interface CredentialRepository {
   list(): Promise<CredentialRecord[]>
   findById(credentialId: string): Promise<CredentialRecord | undefined>
+  findByStudent(studentDid: string): Promise<CredentialRecord[]>
+  create(input: NewCredential): Promise<CredentialRecord>
 }
 
 export interface UniversityRepository {

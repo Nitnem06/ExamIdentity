@@ -73,5 +73,16 @@ export async function transitionSession(
   if (!updated) {
     throw new SessionError(`Session not found: ${sessionId}`, 404)
   }
+
+  // Issue a verifiable credential on successful completion (best-effort).
+  if (toState === 'COMPLETED') {
+    try {
+      const { issueCredentialForSession } = await import('../credential/credentialService')
+      await issueCredentialForSession(sessionId)
+    } catch {
+      // issuance failure must not block the state transition
+    }
+  }
+
   return updated
 }

@@ -12,8 +12,10 @@ import type {
 import { getTransparencyMetrics } from './publicMetricsService'
 import { snapshotHash } from './transparencyHealthService'
 
-export function captureSnapshot(metrics?: TransparencyMetrics): MetricSnapshot {
-  const m = metrics ?? getTransparencyMetrics()
+export async function captureSnapshot(
+  metrics?: TransparencyMetrics,
+): Promise<MetricSnapshot> {
+  const m = metrics ?? (await getTransparencyMetrics())
   const serialized = JSON.stringify({
     period: [m.periodStart, m.periodEnd],
     flagRatePct: m.flagRatePct,

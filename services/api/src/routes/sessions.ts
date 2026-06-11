@@ -15,6 +15,12 @@ import {
   transitionSession,
 } from '../services/session/sessionService'
 import { ingestEvents } from '../services/session/eventService'
+import {
+  createSessionSchema,
+  eventIngestionSchema,
+  stateTransitionSchema,
+  validate,
+} from '../validation/schemas'
 
 interface SessionParams {
   sessionId: string
@@ -60,10 +66,9 @@ const sessionRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: authorizeRoles('student', 'university') },
     async (request, reply) => {
       const user = request.user as AuthPrincipal
-      const body = request.body ?? ({} as CreateSessionRequest)
-      if (!body.examId) {
-        return reply.code(400).send({ error: 'examId is required' })
-      }
+      const v = validate(createSessionSchema, request.body)
+      if (!v.ok) return reply.code(400).send({ error: v.error })
+      const body = v.data
       const studentDid = user.role === 'student' ? user.sub : body.studentDid
       if (!studentDid) {
         return reply.code(400).send({ error: 'studentDid is required' })
@@ -93,10 +98,10 @@ const sessionRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const session = await loadOwned(request, reply)
       if (!session) return reply
-      const toState = request.body?.toState
-      if (!toState) return reply.code(400).send({ error: 'toState is required' })
+      const v = validate(stateTransitionSchema, request.body)
+      if (!v.ok) return reply.code(400).send({ error: v.error })
       try {
-        return await transitionSession(session.sessionId, toState)
+        return await transitionSession(session.sessionId, v.data.toState)
       } catch (err) {
         return handleError(err, reply)
       }
@@ -110,9 +115,10 @@ const sessionRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const session = await loadOwned(request, reply)
       if (!session) return reply
-      const body = request.body ?? ({ signals: [] } as EventIngestionRequest)
+      const v = validate(eventIngestionSchema, request.body)
+      if (!v.ok) return reply.code(400).send({ error: v.error })
       try {
-        return await ingestEvents(session.sessionId, body)
+        return await ingestEvents(session.sessionId, v.data)
       } catch (err) {
         return handleError(err, reply)
       }

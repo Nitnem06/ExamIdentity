@@ -36,11 +36,15 @@ const authRoutes: FastifyPluginAsync = async (app) => {
     }
   })
 
-  // POST /api/auth/dev-token { role, subject, secret } -> JWT (MVP only)
+  // POST /api/auth/dev-token { role, subject, secret } -> JWT (NON-PROD ONLY)
   // Issues university/reviewer tokens for testing until real SSO lands.
+  // Disabled in production to remove the shared-secret backdoor.
   app.post<{ Body: { role?: string; subject?: string; secret?: string } }>(
     '/auth/dev-token',
     async (request, reply) => {
+      if (config.isProd) {
+        return reply.code(404).send({ error: 'Not found' })
+      }
       const { role, subject, secret } = request.body ?? {}
       if (secret !== config.devAuthSecret) {
         return reply.code(403).send({ error: 'Forbidden' })
