@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import scoring, flags, dispute
+from app.routers import scoring, flags, dispute, explanation
 import uvicorn
 
 app = FastAPI(
@@ -20,6 +20,7 @@ app.add_middleware(
 app.include_router(scoring.router, prefix="/api/scoring", tags=["scoring"])
 app.include_router(flags.router, prefix="/api/flags", tags=["flags"])
 app.include_router(dispute.router, prefix="/api/dispute", tags=["dispute"])
+app.include_router(explanation.router, prefix="/api/explanation", tags=["explanation"])
 
 @app.get("/health")
 async def health_check():
