@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 const NAV_LINKS = [
   { href: "/", label: "Platform" },
@@ -28,6 +29,8 @@ function SealMark() {
 
 export function Nav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { me, signOut } = useAuth();
 
   return (
     <nav
@@ -89,20 +92,51 @@ export function Nav() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/wallet/export/demo"
+            href="/wallet"
             className="btn-ghost hidden sm:inline-flex"
             style={{ padding: "9px 15px", fontSize: 13 }}
           >
             My Wallet
           </Link>
 
-          <Link
-            href="#get-started"
-            className="btn-primary"
-            style={{ padding: "9px 17px", fontSize: 13 }}
-          >
-            Get started
-          </Link>
+          {me ? (
+            <>
+              <span
+                className="hidden items-center sm:inline-flex"
+                style={{ fontSize: 12, fontWeight: 700, color: "var(--color-sand)" }}
+              >
+                {me.role === "student" ? "Signed in" : me.role}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  signOut();
+                  router.push("/");
+                }}
+                className="btn-ghost"
+                style={{ padding: "9px 15px", fontSize: 13 }}
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="btn-ghost hidden sm:inline-flex"
+                style={{ padding: "9px 15px", fontSize: 13 }}
+              >
+                Log in
+              </Link>
+              <Link
+                href="/enroll"
+                className="btn-primary"
+                style={{ padding: "9px 17px", fontSize: 13 }}
+              >
+                Get started
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

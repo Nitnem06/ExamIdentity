@@ -5,7 +5,7 @@
 import * as ed from '@noble/ed25519'
 
 ed.etc.sha512Async = async (...m: Uint8Array[]) =>
-  new Uint8Array(await crypto.subtle.digest('SHA-512', ed.etc.concatBytes(...m)))
+  new Uint8Array(await crypto.subtle.digest('SHA-512', ed.etc.concatBytes(...m) as BufferSource))
 
 function fromHex(hex: string): Uint8Array {
   const clean = hex.startsWith('0x') ? hex.slice(2) : hex

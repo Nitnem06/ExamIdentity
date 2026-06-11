@@ -583,11 +583,11 @@ export default function HomePage() {
 
             <div className="flex flex-wrap justify-center gap-3">
               <Link
-                href="#"
+                href="/enroll"
                 className="btn-primary"
                 style={{ padding: "13px 28px", fontSize: 15 }}
               >
-                Request a demo
+                Get started
               </Link>
 
               <Link

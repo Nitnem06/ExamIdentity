@@ -57,7 +57,7 @@ const authRoutes: FastifyPluginAsync = async (app) => {
   app.post<{ Body: { role?: string; subject?: string; secret?: string } }>(
     '/auth/dev-token',
     async (request, reply) => {
-      if (config.isProd) {
+      if (config.isProd && !config.allowDevToken) {
         return reply.code(404).send({ error: 'Not found' })
       }
       const { role, subject, secret } = request.body ?? {}

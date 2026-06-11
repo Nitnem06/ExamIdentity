@@ -14,6 +14,7 @@ import authRoutes from './routes/auth'
 import sessionRoutes from './routes/sessions'
 import disputeRoutes from './routes/disputes'
 import reportRoutes from './routes/reports'
+import meRoutes from './routes/me'
 import { deleteExpiredEvidence } from './services/escrow/escrowService'
 
 export function buildServer() {
@@ -78,6 +79,7 @@ export function buildServer() {
   app.register(sessionRoutes, { prefix: '/api' })
   app.register(disputeRoutes, { prefix: '/api' })
   app.register(reportRoutes, { prefix: '/api' })
+  app.register(meRoutes, { prefix: '/api' })
 
   return app
 }

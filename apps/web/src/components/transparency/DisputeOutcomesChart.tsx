@@ -1,6 +1,7 @@
 // apps/web/src/components/transparency/DisputeOutcomesChart.tsx
 'use client'
 
+import { useEffect, useState } from 'react'
 import {
   BarChart,
   Bar,
@@ -78,6 +79,10 @@ function CustomLegend() {
 }
 
 export function DisputeOutcomesChart({ data }: DisputeOutcomesChartProps) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  if (!mounted) return <div style={{ width: '100%', height: 290 }} />
+
   return (
     <div style={{ width: '100%', height: 260 }}>
       <ResponsiveContainer width="100%" height="100%">

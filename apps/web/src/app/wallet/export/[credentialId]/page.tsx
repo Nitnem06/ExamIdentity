@@ -102,9 +102,9 @@ export default async function CredentialExportPage({ params }: PageProps) {
             style={{ background: 'var(--color-walnut)', border: '1px solid var(--color-cedar)' }}
           >
             <CredentialBridgePanel
-              credentialId={isDemo ? 'cred-demo-001' : credentialId}
-              examTitle="Calculus I — Midterm Exam"
-              studentDid="did:key:z6MkjxYD8wPE1yBbvBpTmYjkgKkeMEQvJGnrdHbJkPWoXfna"
+              credentialId={isDemo ? 'cred-001' : credentialId}
+              examTitle={isDemo ? 'Calculus II — Final' : 'Exam Integrity Credential'}
+              studentDid="did:key:zDemoStudent"
             />
           </div>
 

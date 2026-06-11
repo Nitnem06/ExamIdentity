@@ -25,6 +25,8 @@ export const config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '12h',
   /** Shared secret to mint university/reviewer dev tokens (MVP only). */
   devAuthSecret: process.env.DEV_AUTH_SECRET ?? 'dev-auth-secret-change-me',
+  /** Allow the dev-token route even in production (for MVP demos without SSO). */
+  allowDevToken: process.env.ALLOW_DEV_TOKEN === 'true',
   /** k-anonymity threshold for public metrics (counts/rates below this are suppressed). */
   kAnonymity: num(process.env.K_ANONYMITY, 5),
   /** Base URL used when minting QR verification links. */

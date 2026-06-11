@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { Nav }                      from '@/components/shared/Nav'
 import { Footer }                   from '@/components/shared/Footer'
 import { PublicMetricsDashboard }   from '@/components/transparency/PublicMetricsDashboard'
-import { getMockTransparencySnapshot } from '@/lib/api/transparency'
+import { getTransparencySnapshot } from '@/lib/api/transparency'
 
 export const metadata: Metadata = {
   title: 'Transparency Report',
@@ -14,22 +14,8 @@ export const metadata: Metadata = {
 // Re-validate once per day — public data, no auth needed
 export const revalidate = 86400
 
-async function fetchSnapshot() {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/transparency/snapshot`,
-      { next: { revalidate: 86400 } }
-    )
-    if (!res.ok) throw new Error(`${res.status}`)
-    return await res.json()
-  } catch {
-    // Fall back to mock data during development / when API is offline
-    return getMockTransparencySnapshot()
-  }
-}
-
 export default async function TransparencyPage() {
-  const snapshot = await fetchSnapshot()
+  const snapshot = await getTransparencySnapshot()
 
   return (
     <>

@@ -1,6 +1,7 @@
 // apps/web/src/components/transparency/FlagRateByCategoryChart.tsx
 'use client'
 
+import { useEffect, useState } from 'react'
 import {
   BarChart,
   Bar,
@@ -51,6 +52,9 @@ function barColor(rate: number): string {
 
 export function FlagRateByCategoryChart({ data }: FlagRateByCategoryChartProps) {
   const sorted = [...data].sort((a, b) => b.rate - a.rate)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  if (!mounted) return <div style={{ width: '100%', height: 260 }} />
 
   return (
     <div style={{ width: '100%', height: 260 }}>

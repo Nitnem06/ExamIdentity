@@ -16,13 +16,158 @@ const client = axios.create({
   timeout: 10_000,
 })
 
+// ── Shape returned by the real API (services/api transparency routes) ──────
+interface ApiMetrics {
+  generatedAt: string
+  periodStart: string
+  periodEnd: string
+  totalExamsProtected: number
+  credentialsIssued: number
+  flagRatePct: number
+  disputes: {
+    filed: number
+    autoResolved: number
+    overturned: number
+    upheld: number
+    pending: number
+    averageResolutionHours: number
+  }
+  accommodation: { totalSessions: number; accommodationAdjustedSessions: number; adjustedPct: number }
+  systemicEvents: number
+  flagRateByCategory: Array<{
+    category: string
+    flagRatePct: number
+    totalFlags: number
+    falsePositiveRatePct: number
+  }>
+  deletionCompliance: {
+    evidenceDueForDeletion: number
+    evidenceDeletedOnTime: number
+    compliancePct: number
+    oldestUndeletedDays: number
+    retentionDays: number
+  }
+  modelDrift: {
+    modelVersion: string
+    status: 'STABLE' | 'WATCH' | 'DRIFTING'
+    psi: number
+    lastEvaluatedAt: string
+  }
+  logHealth: {
+    status: 'HEALTHY' | 'DEGRADED' | 'BROKEN'
+    totalEntries: number
+    lastEntryHash: string
+    lastEntryAt: string
+    chainVerified: boolean
+    merkleRoot: string
+  }
+}
+
+const DRIFT_MAP: Record<ApiMetrics['modelDrift']['status'], ModelDriftDetail['status']> = {
+  STABLE: 'stable',
+  WATCH: 'minor_drift',
+  DRIFTING: 'significant_drift',
+}
+
+const LOG_MAP: Record<ApiMetrics['logHealth']['status'], TransparencyLogDetail['health']> = {
+  HEALTHY: 'healthy',
+  DEGRADED: 'degraded',
+  BROKEN: 'critical',
+}
+
+function prettifyCategory(raw: string): string {
+  return raw
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+/** Map the live API metrics payload into the dashboard's snapshot shape. */
+function adaptApiMetrics(m: ApiMetrics): TransparencySnapshot {
+  const periodLabel = new Date(m.periodEnd).toLocaleDateString('en-US', {
+    month: 'short',
+    year: 'numeric',
+  })
+  const lateDeletions = Math.max(
+    0,
+    m.deletionCompliance.evidenceDueForDeletion - m.deletionCompliance.evidenceDeletedOnTime,
+  )
+
+  return {
+    metrics: {
+      totalExamsProtected: m.totalExamsProtected,
+      credentialsIssued: m.credentialsIssued,
+      flagRate: m.flagRatePct,
+      disputesFiled: m.disputes.filed,
+      disputesAutoResolved: m.disputes.autoResolved,
+      disputesOverturned: m.disputes.overturned,
+      avgResolutionTimeDays: Math.round((m.disputes.averageResolutionHours / 24) * 10) / 10,
+      accommodationAdjustedSessions: m.accommodation.accommodationAdjustedSessions,
+      systemicEvents: m.systemicEvents,
+      evidenceDeletionComplianceRate: m.deletionCompliance.compliancePct,
+      modelDriftStatus: DRIFT_MAP[m.modelDrift.status] ?? 'stable',
+      transparencyLogHealth: LOG_MAP[m.logHealth.status] ?? 'healthy',
+      lastUpdatedAt: m.generatedAt,
+      snapshotPeriod: { from: m.periodStart, to: m.periodEnd },
+    },
+    flagRateByCategory: m.flagRateByCategory.map((c) => ({
+      category: prettifyCategory(c.category),
+      rate: c.flagRatePct,
+      count: c.totalFlags,
+      period: 'This period',
+    })),
+    // The API exposes period totals (not a monthly series yet) — present as one bucket.
+    disputeOutcomes: [
+      {
+        month: periodLabel,
+        filed: m.disputes.filed,
+        autoResolved: m.disputes.autoResolved,
+        overturned: m.disputes.overturned,
+        upheld: m.disputes.upheld,
+      },
+    ],
+    deletionCompliance: [
+      {
+        period: periodLabel,
+        scheduled: m.deletionCompliance.evidenceDueForDeletion,
+        completed: m.deletionCompliance.evidenceDeletedOnTime,
+        complianceRate: m.deletionCompliance.compliancePct,
+        lateCompletions: lateDeletions,
+      },
+    ],
+    modelDrift: {
+      status: DRIFT_MAP[m.modelDrift.status] ?? 'stable',
+      lastCheckedAt: m.modelDrift.lastEvaluatedAt,
+      falsePositiveRateDelta: m.modelDrift.psi,
+      falseNegativeRateDelta: 0,
+      baselineVersion: m.modelDrift.modelVersion,
+      currentVersion: m.modelDrift.modelVersion,
+      flagsAuditedThisCycle: m.flagRateByCategory.reduce((s, c) => s + c.totalFlags, 0),
+      description: `Population stability index ${m.modelDrift.psi}. Status ${m.modelDrift.status.toLowerCase()}.`,
+    },
+    logDetail: {
+      health: LOG_MAP[m.logHealth.status] ?? 'healthy',
+      lastEntryAt: m.logHealth.lastEntryAt,
+      totalEntries: m.logHealth.totalEntries,
+      verifiedEntries: m.logHealth.chainVerified ? m.logHealth.totalEntries : 0,
+      integrityRate: m.logHealth.chainVerified ? 100 : 0,
+      latestBlockHash: m.logHealth.lastEntryHash,
+      chainLength: m.logHealth.totalEntries,
+    },
+  }
+}
+
 /**
- * Fetch the full transparency snapshot in one request.
- * All data is anonymised and aggregated — no student PII.
+ * Fetch the transparency snapshot. Reads the live API metrics and adapts them
+ * to the dashboard's shape; falls back to mock data if the API is unreachable.
  */
 export async function getTransparencySnapshot(): Promise<TransparencySnapshot> {
-  const { data } = await client.get<TransparencySnapshot>('/api/transparency/snapshot')
-  return data
+  try {
+    const { data } = await client.get<ApiMetrics>('/api/transparency/metrics')
+    return adaptApiMetrics(data)
+  } catch {
+    return getMockTransparencySnapshot()
+  }
 }
 
 /**
