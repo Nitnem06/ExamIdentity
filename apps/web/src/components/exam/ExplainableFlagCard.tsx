@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { useState } from 'react'
 import type { ExplainableFlag } from '@/types/explanations'
@@ -14,9 +14,14 @@ interface ExplainableFlagCardProps {
   showDispute?: boolean
 }
 
+// ✅ Added explicit timeZone to ensure server and client render identically
 function formatTimestamp(ms: number): string {
   return new Date(ms).toLocaleTimeString('en-US', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: 'UTC', // ✅ Fixes hydration mismatch
   })
 }
 
@@ -37,7 +42,6 @@ export function ExplainableFlagCard({
   const confidencePct = Math.round(flag.confidence * 100)
   const durationSec = Math.round((flag.timeRange.end - flag.timeRange.start) / 1000)
 
-  // Severity border accent
   const borderColors = {
     low:      'var(--color-sage)',
     medium:   'var(--color-amber)',
@@ -55,13 +59,11 @@ export function ExplainableFlagCard({
         borderLeft:   `3px solid ${borderColor}`,
       }}
     >
-      {/* Header row — always visible */}
       <button
         className="w-full text-left px-5 py-4 flex items-start gap-4 group"
         onClick={() => setExpanded(e => !e)}
         aria-expanded={expanded}
       >
-        {/* Type + severity */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span
@@ -72,18 +74,19 @@ export function ExplainableFlagCard({
             </span>
             <FlagSeverityBadge severity={flag.severity} />
             {flag.accommodation.applied && (
-              <span
-                className="badge badge-neutral"
-                style={{ fontSize: 10 }}
-              >
+              <span className="badge badge-neutral" style={{ fontSize: 10 }}>
                 ⚑ Accommodation
               </span>
             )}
           </div>
 
-          {/* Compact meta row */}
+          {/* ✅ suppressHydrationWarning as extra safety net */}
           <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-            <span className="text-xs" style={{ color: 'var(--color-taupe)', fontSize: 11 }}>
+            <span
+              className="text-xs"
+              style={{ color: 'var(--color-taupe)', fontSize: 11 }}
+              suppressHydrationWarning
+            >
               {formatTimestamp(flag.timeRange.start)}
               {' – '}
               {formatTimestamp(flag.timeRange.end)}
@@ -97,7 +100,6 @@ export function ExplainableFlagCard({
           </div>
         </div>
 
-        {/* Recommended action badge */}
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs hidden sm:block" style={{ color: 'var(--color-taupe)', fontSize: 11 }}>
             {ACTION_ICONS[flag.recommendedAction]}{' '}
@@ -116,13 +118,11 @@ export function ExplainableFlagCard({
         </div>
       </button>
 
-      {/* Expanded body */}
       {expanded && (
         <div
           className="px-5 pb-5 border-t animate-fade-in"
           style={{ borderColor: 'var(--color-cedar)' }}
         >
-          {/* Plain-language explanation */}
           <div className="mt-4 mb-5">
             <p className="label">What happened</p>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--color-parchment)', fontSize: 14 }}>
@@ -132,13 +132,11 @@ export function ExplainableFlagCard({
 
           <hr className="divider" />
 
-          {/* Detail rows */}
           <div className="mb-4">
             <p className="label">Evidence details</p>
             <FlagReasonList flag={flag} />
           </div>
 
-          {/* Actions footer */}
           <div className="flex items-center justify-between gap-3 mt-5 pt-4" style={{ borderTop: '1px solid var(--color-cedar)' }}>
             <div className="flex items-center gap-1.5">
               <span

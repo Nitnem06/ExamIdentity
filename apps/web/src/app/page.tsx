@@ -7,9 +7,10 @@ import { ExplainableFlagCard }  from '@/components/exam/ExplainableFlagCard'
 import { FlagEvidenceTimeline } from '@/components/exam/FlagEvidenceTimeline'
 import type { ExplainableFlag, FlagExplanationResponse } from '@/types/explanations'
 
-// ── Demo data for the landing page previews ─────────────────────
-
-const NOW = Date.now()
+// ── Demo data ────────────────────────────────────────────────────
+// ✅ Use a FIXED timestamp instead of Date.now()
+// This ensures server and client always render identical HTML
+const DEMO_BASE_TIME = new Date('2026-06-11T10:00:00.000Z').getTime()
 
 const DEMO_FLAGS: ExplainableFlag[] = [
   {
@@ -17,53 +18,67 @@ const DEMO_FLAGS: ExplainableFlag[] = [
     sessionId:   'session-demo',
     type:        'gaze_deviation',
     severity:    'medium',
-    timeRange:   { start: NOW - 2_400_000, end: NOW - 2_392_000 },
-    observedValue:   '34°',
-    baselineValue:   '8°',
-    policyThreshold: '20°',
+    // ✅ Fixed offsets from a fixed base — never changes between renders
+    timeRange:   { start: DEMO_BASE_TIME - 2_400_000, end: DEMO_BASE_TIME - 2_392_000 },
+    observedValue:     '34°',
+    baselineValue:     '8°',
+    policyThreshold:   '20°',
     adjustedThreshold: '20°',
-    accommodation:   { applied: false },
-    confidence:      0.82,
+    accommodation:     { applied: false },
+    confidence:        0.82,
     explanation:
       'Your gaze moved significantly outside the expected focal zone for 8 seconds. The model observed a mean deviation of 34° from screen centre, compared to your personal baseline of 8°. This occurred once during the session.',
     recommendedAction: 'note_for_review',
     evidenceHashes:    ['sha256:a1b2c3d4e5f6…'],
-    createdAt:         new Date(NOW - 2_392_000).toISOString(),
+    createdAt:         new Date(DEMO_BASE_TIME - 2_392_000).toISOString(),
   },
   {
     id:          'flag-002',
     sessionId:   'session-demo',
     type:        'audio_anomaly',
     severity:    'low',
-    timeRange:   { start: NOW - 1_800_000, end: NOW - 1_796_000 },
-    observedValue:   '68 dB',
-    baselineValue:   '22 dB',
-    policyThreshold: '55 dB',
+    timeRange:   { start: DEMO_BASE_TIME - 1_800_000, end: DEMO_BASE_TIME - 1_796_000 },
+    observedValue:     '68 dB',
+    baselineValue:     '22 dB',
+    policyThreshold:   '55 dB',
     adjustedThreshold: '65 dB',
-    accommodation:   { applied: true, type: 'Noise-Tolerant Environment', description: 'Threshold raised by 10 dB due to approved accommodation for noisy environment.', adjustmentFactor: 1.18 },
-    confidence:      0.64,
+    accommodation:     {
+      applied:          true,
+      type:             'Noise-Tolerant Environment',
+      description:      'Threshold raised by 10 dB due to approved accommodation for noisy environment.',
+      adjustmentFactor: 1.18,
+    },
+    confidence:        0.64,
     explanation:
       'A brief audio spike was detected. Because you have an approved noise-tolerant environment accommodation, the policy threshold was raised to 65 dB — the observed 68 dB marginally exceeded this adjusted threshold.',
     recommendedAction: 'auto_resolved',
     evidenceHashes:    ['sha256:b2c3d4e5f6a1…'],
-    createdAt:         new Date(NOW - 1_796_000).toISOString(),
+    createdAt:         new Date(DEMO_BASE_TIME - 1_796_000).toISOString(),
   },
 ]
 
 const DEMO_SESSION: FlagExplanationResponse = {
-  sessionId:       'session-demo',
-  studentDid:      'did:key:z6Mkj8…',
-  examId:          'exam-calc-101',
-  examTitle:       'Calculus I — Midterm Exam',
-  institutionName: 'University of Delhi',
-  sessionDate:     new Date(NOW - 2_400_000).toISOString(),
-  flags:           DEMO_FLAGS,
-  totalFlags:      2,
+  sessionId:         'session-demo',
+  studentDid:        'did:key:z6Mkj8…',
+  examId:            'exam-calc-101',
+  examTitle:         'Calculus I — Midterm Exam',
+  institutionName:   'University of Delhi',
+  sessionDate:       new Date(DEMO_BASE_TIME - 2_400_000).toISOString(),
+  flags:             DEMO_FLAGS,
+  totalFlags:        2,
   highSeverityCount: 0,
-  reviewStatus:    'pending',
+  reviewStatus:      'pending',
 }
 
-// ── Page sections ────────────────────────────────────────────────
+// ✅ Fixed issued date for the credential mockup — never recalculates
+const DEMO_ISSUED_DATE = new Date('2026-06-11').toLocaleDateString('en-US', {
+  year:     'numeric',
+  month:    '2-digit',
+  day:      '2-digit',
+  timeZone: 'UTC', // ✅ Explicit timezone prevents locale mismatch
+})
+
+// ── Shared components ────────────────────────────────────────────
 
 function FeatureTag({ text }: { text: string }) {
   return (
@@ -80,7 +95,10 @@ function SectionDivider() {
   return (
     <div
       className="w-full"
-      style={{ height: 1, background: 'linear-gradient(90deg, transparent, var(--color-cedar) 30%, var(--color-cedar) 70%, transparent)' }}
+      style={{
+        height:     1,
+        background: 'linear-gradient(90deg, transparent, var(--color-cedar) 30%, var(--color-cedar) 70%, transparent)',
+      }}
     />
   )
 }
@@ -91,18 +109,9 @@ export default function HomePage() {
       <Nav />
 
       {/* ── Hero ──────────────────────────────────────────────── */}
-      <section
-        style={{
-          background:    'var(--color-dark-roast)',
-          paddingTop:    96,
-          paddingBottom: 96,
-        }}
-      >
-        <div
-          className="mx-auto px-6"
-          style={{ maxWidth: 'var(--page-max)' }}
-        >
-          {/* Eyebrow */}
+      <section style={{ background: 'var(--color-dark-roast)', paddingTop: 96, paddingBottom: 96 }}>
+        <div className="mx-auto px-6" style={{ maxWidth: 'var(--page-max)' }}>
+
           <div className="flex items-center gap-2 mb-6">
             <span
               className="inline-block rounded-full"
@@ -116,7 +125,6 @@ export default function HomePage() {
             </span>
           </div>
 
-          {/* Headline */}
           <h1
             className="font-display font-bold mb-6"
             style={{
@@ -135,17 +143,12 @@ export default function HomePage() {
             <span style={{ color: 'var(--color-ceramic)' }}>in escrow.</span>
           </h1>
 
-          {/* Sub */}
-          <p
-            className="mb-8 leading-relaxed"
-            style={{ color: 'var(--color-sand)', fontSize: 18, maxWidth: 520 }}
-          >
+          <p className="mb-8 leading-relaxed" style={{ color: 'var(--color-sand)', fontSize: 18, maxWidth: 520 }}>
             ExamIdentity replaces black-box proctoring with an open system.
             You see every flag, you own every credential, and the evidence
             that affects your grade is never held by the institution alone.
           </p>
 
-          {/* CTAs */}
           <div className="flex flex-wrap items-center gap-3">
             <Link href="#features" className="btn-primary" style={{ padding: '12px 24px', fontSize: 15 }}>
               See how it works
@@ -155,7 +158,6 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Trust strip */}
           <div className="flex flex-wrap items-center gap-5 mt-10 pt-8" style={{ borderTop: '1px solid var(--color-cedar)' }}>
             {[
               'W3C Verifiable Credentials',
@@ -251,7 +253,6 @@ export default function HomePage() {
         <div className="mx-auto px-6" style={{ maxWidth: 'var(--page-max)' }}>
           <div className="grid gap-12 lg:grid-cols-2 items-start">
 
-            {/* Left: copy */}
             <div className="lg:sticky lg:top-24">
               <div className="flex items-center gap-2 mb-4">
                 <FeatureTag text="Feature 01" />
@@ -285,7 +286,6 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Right: live demo */}
             <div className="space-y-3">
               <div className="mb-3 flex items-center justify-between">
                 <p className="label">Live preview — {DEMO_SESSION.examTitle}</p>
@@ -294,12 +294,11 @@ export default function HomePage() {
                 </span>
               </div>
 
-              {/* Timeline */}
               <div className="card mb-2">
                 <FlagEvidenceTimeline
                   flags={DEMO_FLAGS}
-                  sessionStart={NOW - 3_600_000}
-                  sessionEnd={NOW - 600_000}
+                  sessionStart={DEMO_BASE_TIME - 3_600_000}  // ✅ fixed base
+                  sessionEnd={DEMO_BASE_TIME - 600_000}       // ✅ fixed base
                 />
               </div>
 
@@ -341,10 +340,10 @@ export default function HomePage() {
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { icon: '📄', label: 'Signed VC JSON',      note: 'W3C VC 2.0'          },
-                  { icon: '⬛', label: 'QR Verification',      note: 'Publicly verifiable'  },
-                  { icon: '🍎', label: 'Apple Wallet',         note: 'Coming in v1'         },
-                  { icon: '💼', label: 'LinkedIn',             note: 'Coming in v1'         },
+                  { icon: '📄', label: 'Signed VC JSON', note: 'W3C VC 2.0'         },
+                  { icon: '⬛', label: 'QR Verification', note: 'Publicly verifiable' },
+                  { icon: '🍎', label: 'Apple Wallet',    note: 'Coming in v1'        },
+                  { icon: '💼', label: 'LinkedIn',        note: 'Coming in v1'        },
                 ].map(({ icon, label, note }) => (
                   <div
                     key={label}
@@ -366,21 +365,16 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Visual: credential card mockup */}
+            {/* Credential card mockup */}
             <div
               className="rounded-card p-6 relative overflow-hidden"
-              style={{
-                background:  'var(--color-walnut)',
-                border:      '1px solid var(--color-bark)',
-                minHeight:   280,
-              }}
+              style={{ background: 'var(--color-walnut)', border: '1px solid var(--color-bark)', minHeight: 280 }}
             >
-              {/* Amber glow background accent */}
               <div
                 className="absolute -top-12 -right-12 rounded-full pointer-events-none"
                 style={{
-                  width:  200,
-                  height: 200,
+                  width:      200,
+                  height:     200,
                   background: 'radial-gradient(circle, color-mix(in srgb, var(--color-amber) 12%, transparent) 0%, transparent 70%)',
                 }}
               />
@@ -401,14 +395,16 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   {[
-                    { label: 'Issued',       val: new Date().toLocaleDateString() },
-                    { label: 'Proof type',   val: 'Ed25519Signature2020'          },
-                    { label: 'Subject DID',  val: 'did:key:z6Mkj8…'               },
-                    { label: 'Integrity',    val: 'Verified'                      },
+                    { label: 'Issued',      val: DEMO_ISSUED_DATE          }, // ✅ Fixed date constant
+                    { label: 'Proof type',  val: 'Ed25519Signature2020'    },
+                    { label: 'Subject DID', val: 'did:key:z6Mkj8…'         },
+                    { label: 'Integrity',   val: 'Verified'                },
                   ].map(({ label, val }) => (
                     <div key={label}>
                       <p className="label mb-0.5">{label}</p>
-                      <p className="text-xs font-mono" style={{ color: 'var(--color-ceramic)', fontSize: 12 }}>{val}</p>
+                      <p className="text-xs font-mono" style={{ color: 'var(--color-ceramic)', fontSize: 12 }}>
+                        {val}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -431,13 +427,12 @@ export default function HomePage() {
       <section style={{ background: 'var(--color-dark-roast)', padding: '80px 0' }}>
         <div className="mx-auto px-6" style={{ maxWidth: 'var(--page-max)' }}>
           <div className="grid gap-12 lg:grid-cols-2 items-center">
-            {/* Stats preview */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: 'Exams protected',   value: '18,432',  accent: 'color: var(--color-amber-glow)'  },
-                { label: 'Credentials issued',value: '17,890',  accent: 'color: var(--color-sage)'        },
-                { label: 'Overturn rate',     value: '19.6%',   accent: 'color: var(--color-slate-blue)'  },
-                { label: 'Deletion compliance', value: '99.6%', accent: 'color: var(--color-ceramic)'     },
+                { label: 'Exams protected',     value: '18,432', accent: 'color: var(--color-amber-glow)' },
+                { label: 'Credentials issued',  value: '17,890', accent: 'color: var(--color-sage)'       },
+                { label: 'Overturn rate',       value: '19.6%',  accent: 'color: var(--color-slate-blue)' },
+                { label: 'Deletion compliance', value: '99.6%',  accent: 'color: var(--color-ceramic)'    },
               ].map(({ label, value, accent }) => (
                 <div
                   key={label}
@@ -445,14 +440,16 @@ export default function HomePage() {
                   style={{ background: 'var(--color-walnut)', border: '1px solid var(--color-cedar)' }}
                 >
                   <p className="label mb-1">{label}</p>
-                  <p className="font-display font-bold" style={{ fontFamily: 'var(--font-display)', fontSize: 28, letterSpacing: '-0.02em', ...Object.fromEntries([accent.split(': ')]) }}>
+                  <p
+                    className="font-display font-bold"
+                    style={{ fontFamily: 'var(--font-display)', fontSize: 28, letterSpacing: '-0.02em', ...Object.fromEntries([accent.split(': ')]) }}
+                  >
                     {value}
                   </p>
                 </div>
               ))}
             </div>
 
-            {/* Copy */}
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <FeatureTag text="Feature 03" />
@@ -470,11 +467,7 @@ export default function HomePage() {
                 and model drift — without ever seeing a student's personal data. The transparency
                 log is hash-chained and tamper-evident.
               </p>
-              <Link
-                href="/transparency"
-                className="btn-primary"
-                style={{ padding: '11px 22px', fontSize: 14 }}
-              >
+              <Link href="/transparency" className="btn-primary" style={{ padding: '11px 22px', fontSize: 14 }}>
                 View full transparency report →
               </Link>
             </div>
@@ -487,10 +480,7 @@ export default function HomePage() {
         id="get-started"
         style={{ background: 'var(--color-mahogany)', padding: '80px 0', borderTop: '1px solid var(--color-cedar)' }}
       >
-        <div
-          className="mx-auto px-6 text-center"
-          style={{ maxWidth: 640 }}
-        >
+        <div className="mx-auto px-6 text-center" style={{ maxWidth: 640 }}>
           <h2
             className="font-display font-bold mb-4"
             style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: 'var(--color-ivory)', letterSpacing: '-0.03em' }}
