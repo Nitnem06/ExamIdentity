@@ -1,4 +1,5 @@
-// apps/web/src/app/page.tsx
+"use client";
+
 import Link from 'next/link'
 import { Nav }                  from '@/components/shared/Nav'
 import { Footer }               from '@/components/shared/Footer'

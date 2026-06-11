@@ -109,7 +109,7 @@ export const EXPORT_FORMAT_OPTIONS: ExportFormatOption[] = [
   {
     id: 'apple_wallet',
     label: 'Apple Wallet',
-    description: 'Add to your iPhone's Wallet app.',
+    description: 'Add to your iPhone Wallet app.',
     icon: '🍎',
     isStub: true,
     available: true,

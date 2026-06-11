@@ -1,4 +1,5 @@
-// apps/web/src/components/shared/Footer.tsx
+"use client";
+
 import Link from 'next/link'
 
 const LINKS = {
