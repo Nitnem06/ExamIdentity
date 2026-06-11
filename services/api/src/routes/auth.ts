@@ -1,12 +1,27 @@
 // Auth routes (Phase 2): DID challenge/response login + dev token issuance.
 import type { FastifyPluginAsync } from 'fastify'
-import type { LoginRequest } from '@examidentity/shared-types'
+import type { AuthPrincipal, LoginRequest } from '@examidentity/shared-types'
 import { config } from '../config'
 import { studentRepository } from '../data'
 import { toStudentProfile } from '../services/identity/enrollmentService'
 import { createChallenge, verifyLogin } from '../auth/authService'
+import { authenticate } from '../auth/guards'
 
 const authRoutes: FastifyPluginAsync = async (app) => {
+  // GET /api/auth/me — validate the token and return the current principal.
+  app.get('/auth/me', { preHandler: authenticate }, async (request) => {
+    const user = request.user as AuthPrincipal
+    if (user.role === 'student') {
+      const record = await studentRepository.findByDid(user.sub)
+      return {
+        role: user.role,
+        subject: user.sub,
+        profile: record ? toStudentProfile(record) : undefined,
+      }
+    }
+    return { role: user.role, subject: user.sub }
+  })
+
   // POST /api/auth/challenge { did } -> nonce to sign
   app.post<{ Body: { did?: string } }>('/auth/challenge', async (request, reply) => {
     const did = request.body?.did
