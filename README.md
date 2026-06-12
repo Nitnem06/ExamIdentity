@@ -1,8 +1,8 @@
-# ExamIdentity
+# Provora
 
 **Verifiable exam integrity without the black box.**
 
-ExamIdentity is a privacy-first exam proctoring and credentialing platform. Every integrity decision it makes is explainable, disputable, and publicly auditable — and the credential a student earns is theirs to take anywhere.
+Provora is a privacy-first exam proctoring and credentialing platform. Every integrity decision it makes is explainable, disputable, and publicly auditable — and the credential a student earns is theirs to take anywhere.
 
 ---
 
@@ -15,7 +15,7 @@ Online proctoring today is broken in four ways:
 3. **Zero accountability.** Institutions and the public have no visibility into how often a proctoring system flags people, how often those flags are wrong, or whether evidence is actually deleted when it should be.
 4. **Locked-in credentials.** Exam results live inside a vendor's portal. They cannot be independently verified, shared, or carried to another platform.
 
-## What Makes ExamIdentity Unique
+## What Makes Provora Unique
 
 - **Explainable flags, not verdicts.** Every flag carries the observed value, the student's *personal* baseline, the policy threshold, any accommodation adjustment, the model's confidence, and the student's dispute rights. The explanation builder is deterministic and rule-based — not a black box.
 - **Accommodation-aware scoring.** Policy thresholds are adjusted per accommodation (e.g. a screen-reader accommodation relaxes the off-screen gaze threshold 3×), so accessibility needs are not punished as cheating.
