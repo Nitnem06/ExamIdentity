@@ -32,9 +32,9 @@ Online proctoring today fails students and institutions alike:
 | **Zero accountability** | Nobody can see how often a proctoring system is wrong, or whether evidence is ever deleted |
 | **Locked-in credentials** | Exam results die inside a vendor portal — unverifiable, unshareable, unportable |
 
-> **ExamIdentity flips the model:** the *system* must prove its fairness to the student — not the other way around.
+> **PROVORA flips the model:** the *system* must prove its fairness to the student — not the other way around.
 
-## ✨ What Makes ExamIdentity Unique
+## ✨ What Makes PROVORA Unique 
 
 - 🔍 **Explainable flags, not verdicts** — every flag carries the observed value, the student's *personal* baseline, the threshold, confidence, and dispute rights. The builder is deterministic and rule-based, never a black box.
 - ♿ **Accommodation-aware scoring** — thresholds adapt per accommodation (a screen-reader accommodation relaxes the gaze threshold 3×). Accessibility is never punished as cheating.
