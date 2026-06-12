@@ -1,4 +1,4 @@
-# Deploying ExamIdentity (MVP)
+# Deploying Provora (MVP)
 
 This guide covers a minimal production/MVP deployment. SSO is intentionally out
 of scope for the MVP — university/reviewer access uses a dev-token route gated

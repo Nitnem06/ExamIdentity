@@ -13,7 +13,7 @@ const fieldStyle: CSSProperties = {
   padding: '12px 14px',
   borderRadius: 'var(--radius-soft)',
   border: '1px solid rgba(244,234,220,0.16)',
-  background: 'rgba(19,11,7,0.6)',
+  background: 'rgba(31,21,14,0.6)',
   color: 'var(--color-ivory)',
   fontSize: 15,
   outline: 'none',
@@ -68,7 +68,7 @@ export default function LoginPage() {
       <Nav />
       <main className="center-wrap" style={{ paddingTop: 56, paddingBottom: 80 }}>
         <div style={{ maxWidth: 520, margin: '0 auto' }}>
-          <div className="card" style={{ padding: 36 }}>
+          <div className="card reveal-pop" style={{ padding: 36 }}>
             <p className="label mb-2">Welcome back</p>
             <h1
               style={{

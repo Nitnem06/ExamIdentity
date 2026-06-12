@@ -63,7 +63,7 @@ export function PublicMetricsDashboard({ snapshot }: PublicMetricsDashboardProps
     <div className="space-y-12">
 
       {/* ── Top KPIs ──────────────────────────────────────────── */}
-      <section>
+      <section className="reveal">
         <SectionHeader
           title="Platform activity"
           description={`Snapshot: ${new Date(metrics.snapshotPeriod.from).toLocaleDateString()} – ${new Date(metrics.snapshotPeriod.to).toLocaleDateString()}`}
@@ -101,7 +101,7 @@ export function PublicMetricsDashboard({ snapshot }: PublicMetricsDashboardProps
       </section>
 
       {/* ── Disputes ──────────────────────────────────────────── */}
-      <section>
+      <section className="reveal">
         <SectionHeader
           title="Dispute outcomes"
           description="Students have the right to dispute any flag. These are the results."
@@ -118,7 +118,7 @@ export function PublicMetricsDashboard({ snapshot }: PublicMetricsDashboardProps
       </section>
 
       {/* ── Flag rates + deletion ─────────────────────────────── */}
-      <section>
+      <section className="reveal">
         <SectionHeader
           title="Flag rates and evidence handling"
           description="Aggregate rates only — no personal data is shown."
@@ -137,7 +137,7 @@ export function PublicMetricsDashboard({ snapshot }: PublicMetricsDashboardProps
       </section>
 
       {/* ── System health ─────────────────────────────────────── */}
-      <section>
+      <section className="reveal">
         <SectionHeader
           title="System health"
           description="Model drift and transparency log integrity — updated daily."
@@ -169,10 +169,10 @@ export function PublicMetricsDashboard({ snapshot }: PublicMetricsDashboardProps
         </span>.
         Data is refreshed every 24 hours. For audit enquiries, contact{' '}
         <a
-          href="mailto:transparency@examidentity.app"
+          href="mailto:transparency@provora.app"
           style={{ color: 'var(--color-amber)', textDecoration: 'underline' }}
         >
-          transparency@examidentity.app
+          transparency@provora.app
         </a>.
       </div>
     </div>

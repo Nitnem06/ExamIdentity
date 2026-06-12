@@ -14,7 +14,7 @@ const fieldStyle: CSSProperties = {
   padding: '12px 14px',
   borderRadius: 'var(--radius-soft)',
   border: '1px solid rgba(244,234,220,0.16)',
-  background: 'rgba(19,11,7,0.6)',
+  background: 'rgba(31,21,14,0.6)',
   color: 'var(--color-ivory)',
   fontSize: 15,
   outline: 'none',
@@ -70,7 +70,7 @@ export default function EnrollPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `examidentity-recovery-${result.did.slice(0, 18)}.json`
+    a.download = `provora-recovery-${result.did.slice(0, 18)}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -81,7 +81,7 @@ export default function EnrollPage() {
       <main className="center-wrap" style={{ paddingTop: 56, paddingBottom: 80 }}>
         <div style={{ maxWidth: 520, margin: '0 auto' }}>
           {!result ? (
-            <div className="card" style={{ padding: 36 }}>
+            <div className="card reveal-pop" style={{ padding: 36 }}>
               <p className="label mb-2">Get started</p>
               <h1
                 style={{
@@ -163,7 +163,7 @@ export default function EnrollPage() {
               </p>
             </div>
           ) : (
-            <div className="card" style={{ padding: 36 }}>
+            <div className="card reveal-pop" style={{ padding: 36 }}>
               <p className="label mb-2">Identity created</p>
               <h1
                 style={{
@@ -185,7 +185,7 @@ export default function EnrollPage() {
                   wordBreak: 'break-all',
                   fontSize: 12,
                   color: 'var(--color-amber-glow)',
-                  background: 'rgba(19,11,7,0.6)',
+                  background: 'rgba(31,21,14,0.6)',
                   borderRadius: 'var(--radius-soft)',
                   padding: 12,
                   marginBottom: 20,

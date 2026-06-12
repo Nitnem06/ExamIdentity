@@ -65,7 +65,7 @@ export function CredentialBridgePanel({
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href     = url
-    a.download = `examidentity-credential-${credentialId.slice(0, 8)}.json`
+    a.download = `provora-credential-${credentialId.slice(0, 8)}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -152,7 +152,7 @@ export function CredentialBridgePanel({
               <LinkedInShareButton
                 payload={{
                   title:        examTitle,
-                  description:  'Verified exam credential issued by ExamIdentity',
+                  description:  'Verified exam credential issued by Provora',
                   certUrl:      `${typeof window !== 'undefined' ? window.location.origin : ''}/verify/${credentialId}`,
                   credentialId: credentialId,
                   issuedAt:     vcExport.issuedAt,
@@ -176,7 +176,7 @@ export function CredentialBridgePanel({
                   fontSize: 11,
                 }}
               >
-                openid-credential-offer://?credential_offer_uri=https://api.examidentity.app/oid4vci/offer/{credentialId}
+                openid-credential-offer://?credential_offer_uri=https://api.provora.app/oid4vci/offer/{credentialId}
               </div>
               <p className="text-xs mt-2" style={{ color: 'var(--color-taupe)', fontSize: 11 }}>
                 This is a demo stub. OID4VCI issuance endpoint coming in v2.

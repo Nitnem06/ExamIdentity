@@ -1,4 +1,5 @@
 // apps/web/src/components/transparency/PublicMetricCard.tsx
+import { CountUp } from '@/components/anim/CountUp'
 
 interface PublicMetricCardProps {
   label:        string
@@ -35,7 +36,7 @@ export function PublicMetricCard({
 
   return (
     <div
-      className="rounded-card p-5 flex flex-col gap-2"
+      className="rounded-card p-5 flex flex-col gap-2 lift"
       style={{
         background: cfg.bg,
         border:     `1px solid ${cfg.border}`,
@@ -55,7 +56,11 @@ export function PublicMetricCard({
           className="font-display font-bold leading-none"
           style={{ color: cfg.value, fontSize: valueFontSize, fontFamily: 'var(--font-display)' }}
         >
-          {typeof value === 'number' ? value.toLocaleString() : value}
+          {typeof value === 'number' ? (
+            <CountUp value={value} decimals={Number.isInteger(value) ? 0 : 1} />
+          ) : (
+            value
+          )}
         </span>
         {unit && (
           <span

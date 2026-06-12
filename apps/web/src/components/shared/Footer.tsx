@@ -83,7 +83,7 @@ export function Footer() {
             letterSpacing: "-0.045em",
           }}
         >
-          Exam<span style={{ color: "var(--color-amber-dim)" }}>Identity</span>
+          Prov<span style={{ color: "var(--color-amber-dim)" }}>ora</span>
         </p>
 
         <div className="space-y-1">
@@ -91,7 +91,7 @@ export function Footer() {
             Self-sovereign exam integrity. Students own their data.
           </p>
           <p className="text-xs" style={{ color: "var(--color-taupe)", fontSize: 11 }}>
-            © {new Date().getFullYear()} ExamIdentity. Built on W3C DID and Verifiable Credentials.
+            © {new Date().getFullYear()} Provora. Built on W3C DID and Verifiable Credentials.
           </p>
         </div>
       </div>

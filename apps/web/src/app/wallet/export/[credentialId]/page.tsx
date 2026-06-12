@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: isDemo
       ? 'Export Demo — Credential Wallet'
       : `Export Credential ${credentialId.slice(0, 8)}`,
-    description: 'Export your ExamIdentity verifiable credential to your preferred format.',
+    description: 'Export your Provora verifiable credential to your preferred format.',
   }
 }
 
@@ -114,7 +114,7 @@ export default async function CredentialExportPage({ params }: PageProps) {
               {
                 icon:  '🔒',
                 title: 'Your key, your data',
-                body:  'The proof is signed with your DID key. ExamIdentity cannot revoke or alter it without your consent.',
+                body:  'The proof is signed with your DID key. Provora cannot revoke or alter it without your consent.',
               },
               {
                 icon:  '📋',

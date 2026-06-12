@@ -22,7 +22,7 @@ const fieldStyle = {
   padding: '9px 13px',
   borderRadius: 'var(--radius-soft)',
   border: '1px solid rgba(244,234,220,0.16)',
-  background: 'rgba(19,11,7,0.6)',
+  background: 'rgba(31,21,14,0.6)',
   color: 'var(--color-ivory)',
   fontSize: 14,
   outline: 'none',
@@ -133,7 +133,9 @@ export default function ExamFlagsPage() {
           ) : data && data.flags.length > 0 ? (
             <div className="flex flex-col gap-4">
               {data.flags.map((flag) => (
-                <ExplainableFlagCard key={flag.id} flag={flag} onDispute={onDispute} />
+                <div key={flag.id} className="reveal">
+                  <ExplainableFlagCard flag={flag} onDispute={onDispute} />
+                </div>
               ))}
             </div>
           ) : (

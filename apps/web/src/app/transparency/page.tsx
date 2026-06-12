@@ -8,7 +8,7 @@ import { getTransparencySnapshot } from '@/lib/api/transparency'
 export const metadata: Metadata = {
   title: 'Transparency Report',
   description:
-    'Aggregate platform metrics for ExamIdentity — flag rates, dispute outcomes, deletion compliance, and model drift. No personal data shown.',
+    'Aggregate platform metrics for Provora — flag rates, dispute outcomes, deletion compliance, and model drift. No personal data shown.',
 }
 
 // Re-validate once per day — public data, no auth needed
@@ -52,7 +52,7 @@ export default async function TransparencyPage() {
                   Transparency Report
                 </h1>
                 <p className="mt-2 text-sm" style={{ color: 'var(--color-sand)', fontSize: 14, maxWidth: 480 }}>
-                  Aggregate integrity metrics for the ExamIdentity platform.
+                  Aggregate integrity metrics for the Provora platform.
                   No student personal data, biometrics, or session-level detail is shown here.
                 </p>
               </div>

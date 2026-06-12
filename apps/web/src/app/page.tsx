@@ -5,6 +5,7 @@ import { Nav } from "@/components/shared/Nav";
 import { Footer } from "@/components/shared/Footer";
 import { ExplainableFlagCard } from "@/components/exam/ExplainableFlagCard";
 import { FlagEvidenceTimeline } from "@/components/exam/FlagEvidenceTimeline";
+import { CountUp } from "@/components/anim/CountUp";
 import type {
   ExplainableFlag,
   FlagExplanationResponse,
@@ -112,15 +113,19 @@ function DomainCard({
   examples,
   tone,
   note,
+  delay,
 }: {
   label: string;
   owner: string;
   examples: string[];
   tone: string;
   note?: string;
+  delay?: 1 | 2 | 3;
 }) {
   return (
-    <div className="card reveal-pop p-6 text-center">
+    <div
+      className={`card reveal-pop lift p-6 text-center${delay ? ` delay-${delay}` : ""}`}
+    >
       <p className="label mb-2">{label}</p>
       <h3
         className="mb-4 font-bold"
@@ -167,6 +172,37 @@ export default function HomePage() {
           style={{ background: "var(--color-dark-roast)" }}
         >
           <div className="absolute left-1/2 top-0 h-80 w-80 -translate-x-1/2 rounded-full bg-[rgba(217,154,78,0.16)] blur-3xl" />
+          <div className="hero-aurora" />
+          <div
+            className="float-slow"
+            style={{
+              position: "absolute",
+              top: "20%",
+              left: "11%",
+              width: 92,
+              height: 92,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(240,194,123,0.28), transparent 70%)",
+              filter: "blur(6px)",
+              pointerEvents: "none",
+            }}
+          />
+          <div
+            className="float-slower"
+            style={{
+              position: "absolute",
+              bottom: "16%",
+              right: "13%",
+              width: 124,
+              height: 124,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(139,160,184,0.2), transparent 70%)",
+              filter: "blur(8px)",
+              pointerEvents: "none",
+            }}
+          />
 
           <div className="center-wrap relative z-10 text-center">
             <div className="fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-[rgba(217,154,78,0.24)] bg-[rgba(217,154,78,0.1)] px-4 py-2">
@@ -195,7 +231,7 @@ export default function HomePage() {
               }}
             >
               Students own their{" "}
-              <span style={{ color: "var(--color-amber-glow)" }}>identity.</span>
+              <span className="animated-gradient-text">identity.</span>
               <br />
               Evidence stays in{" "}
               <span style={{ color: "var(--color-ceramic)" }}>neutral escrow.</span>
@@ -205,7 +241,7 @@ export default function HomePage() {
               className="fade-up delay-2 mx-auto mb-9 max-w-2xl leading-relaxed"
               style={{ color: "var(--color-sand)", fontSize: 18 }}
             >
-              ExamIdentity replaces black-box proctoring with a self-sovereign,
+              Provora replaces black-box proctoring with a self-sovereign,
               privacy-preserving platform for explainable flags, portable
               credentials, and public accountability.
             </p>
@@ -253,6 +289,7 @@ export default function HomePage() {
               <DomainCard
                 label="Category A - Student data"
                 owner="You"
+                delay={1}
                 tone="var(--color-amber-glow)"
                 examples={[
                   "DID and key material",
@@ -265,6 +302,7 @@ export default function HomePage() {
               <DomainCard
                 label="Category B - Integrity evidence"
                 owner="Neutral escrow"
+                delay={2}
                 tone="var(--color-slate-blue)"
                 examples={[
                   "Behavioural vectors",
@@ -278,6 +316,7 @@ export default function HomePage() {
               <DomainCard
                 label="Category C - Institutional data"
                 owner="Institution"
+                delay={3}
                 tone="var(--color-ceramic)"
                 examples={[
                   "Exam configuration",
@@ -472,7 +511,7 @@ export default function HomePage() {
                   style={{
                     color: "var(--color-amber-glow)",
                     borderColor: "rgba(217,154,78,0.22)",
-                    background: "rgba(19,11,7,0.5)",
+                    background: "rgba(31,21,14,0.5)",
                   }}
                 >
                   proofValue: z58DAdFfa9...
@@ -489,23 +528,26 @@ export default function HomePage() {
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
               <div className="grid gap-4 sm:grid-cols-2">
                 {[
-                  ["Exams protected", "18,432", "var(--color-amber-glow)"],
-                  ["Credentials issued", "17,890", "var(--color-sage)"],
-                  ["Overturn rate", "19.6%", "var(--color-slate-blue)"],
-                  ["Deletion compliance", "99.6%", "var(--color-ceramic)"],
-                ].map(([label, value, color]) => (
-                  <div key={label} className="card reveal-pop p-6 text-center">
-                    <p className="label mb-2">{label}</p>
+                  { label: "Exams protected", value: 18432, suffix: "", decimals: 0, color: "var(--color-amber-glow)" },
+                  { label: "Credentials issued", value: 17890, suffix: "", decimals: 0, color: "var(--color-sage)" },
+                  { label: "Overturn rate", value: 19.6, suffix: "%", decimals: 1, color: "var(--color-slate-blue)" },
+                  { label: "Deletion compliance", value: 99.6, suffix: "%", decimals: 1, color: "var(--color-ceramic)" },
+                ].map((s, i) => (
+                  <div
+                    key={s.label}
+                    className={`card reveal-pop lift p-6 text-center delay-${(i % 3) + 1}`}
+                  >
+                    <p className="label mb-2">{s.label}</p>
                     <p
                       className="font-bold"
                       style={{
                         fontFamily: "var(--font-display)",
-                        color,
+                        color: s.color,
                         fontSize: 34,
                         letterSpacing: "-0.04em",
                       }}
                     >
-                      {value}
+                      <CountUp value={s.value} suffix={s.suffix} decimals={s.decimals} />
                     </p>
                   </div>
                 ))}

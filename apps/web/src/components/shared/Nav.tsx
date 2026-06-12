@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -31,15 +32,25 @@ export function Nav() {
   const pathname = usePathname();
   const router = useRouter();
   const { me, signOut } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <nav
-      className="sticky top-0 z-50 w-full"
+      className={`sticky top-0 z-50 w-full ${scrolled ? "nav-scrolled" : ""}`}
       style={{
-        height: "var(--nav-height)",
-        background: "rgba(28, 16, 10, 0.9)",
+        height: scrolled ? "64px" : "var(--nav-height)",
+        background: "rgba(44, 30, 21, 0.9)",
         borderBottom: "1px solid rgba(244, 234, 220, 0.12)",
         backdropFilter: "blur(18px)",
+        transition:
+          "height 260ms cubic-bezier(0.16,1,0.3,1), background 260ms ease, box-shadow 260ms ease, border-color 260ms ease",
       }}
     >
       <div
@@ -49,7 +60,7 @@ export function Nav() {
         <Link
           href="/"
           className="group flex items-center gap-3"
-          aria-label="ExamIdentity home"
+          aria-label="Provora home"
         >
           <SealMark />
           <span
@@ -61,7 +72,7 @@ export function Nav() {
               letterSpacing: "-0.045em",
             }}
           >
-            Exam<span style={{ color: "var(--color-amber-glow)" }}>Identity</span>
+            Prov<span style={{ color: "var(--color-amber-glow)" }}>ora</span>
           </span>
         </Link>
 

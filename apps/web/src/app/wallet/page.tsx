@@ -40,7 +40,7 @@ export default function WalletPage() {
           {loading ? (
             <p style={{ color: 'var(--color-taupe)', fontSize: 14 }}>Loading…</p>
           ) : !me ? (
-            <div className="card" style={{ padding: 28 }}>
+            <div className="card reveal-pop" style={{ padding: 28 }}>
               <p style={{ color: 'var(--color-ceramic)', fontSize: 15, marginBottom: 14 }}>
                 Log in to see your credentials.
               </p>
@@ -60,7 +60,7 @@ export default function WalletPage() {
                 <Link
                   key={c.id}
                   href={`/wallet/export/${c.id}`}
-                  className="card"
+                  className="card reveal-pop"
                   style={{ padding: 20, display: 'block' }}
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -83,7 +83,7 @@ export default function WalletPage() {
               ))}
             </div>
           ) : (
-            <div className="card" style={{ padding: 28 }}>
+            <div className="card reveal-pop" style={{ padding: 28 }}>
               <p style={{ color: 'var(--color-ceramic)', fontSize: 15, marginBottom: 8 }}>
                 No credentials yet.
               </p>
