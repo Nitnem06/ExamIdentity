@@ -15,9 +15,23 @@ The credential a student earns is **theirs to take anywhere**.
 ![Redis](https://img.shields.io/badge/Redis-Pub%2FSub-DC382D?logo=redis&logoColor=white)
 ![Ed25519](https://img.shields.io/badge/Crypto-Ed25519%20%2B%20Merkle-8A2BE2)
 
-[The Problem](#-the-problem-we-are-solving) • [What Makes Us Different](#-what-makes-examidentity-unique) • [Features](#-top-3-features) • [Pipeline](#-how-the-system-works) • [Architecture](#-architecture) • [Quickstart](#-getting-started)
+[Live Demo](#-live-demo) • [The Problem](#-the-problem-we-are-solving) • [What Makes Us Different](#-what-makes-provora-unique) • [Features](#-top-3-features) • [Pipeline](#-how-the-system-works) • [Architecture](#-architecture) • [Quickstart](#-getting-started)
 
 </div>
+
+---
+
+## 🌐 Live Demo
+
+- **Web App:** `https://provora.vercel.app`
+- **API Health:** `https://provora.onrender.com/health`
+
+### Hosted MVP Stack
+- **Frontend (`apps/web`)** → Vercel
+- **API (`services/api`)** → Render
+- **Database** → Supabase Postgres
+
+> Demo note: the deployed MVP uses the simplest hosted path for the web app, API, and database. Optional scoring/realtime services are not required for the core demo flow.
 
 ---
 
@@ -34,7 +48,7 @@ Online proctoring today fails students and institutions alike:
 
 > **PROVORA flips the model:** the *system* must prove its fairness to the student — not the other way around.
 
-## ✨ What Makes PROVORA Unique 
+## ✨ What Makes PROVORA Unique
 
 - 🔍 **Explainable flags, not verdicts** — every flag carries the observed value, the student's *personal* baseline, the threshold, confidence, and dispute rights. The builder is deterministic and rule-based, never a black box.
 - ♿ **Accommodation-aware scoring** — thresholds adapt per accommodation (a screen-reader accommodation relaxes the gaze threshold 3×). Accessibility is never punished as cheating.
@@ -117,7 +131,6 @@ flowchart TD
     G --> I[👛 Wallet & Credential Bridge<br><i>VC · VP · JWT · QR · passes</i>]
     H --> J[📊 Public Transparency Dashboard<br><i>k-anonymized metrics</i>]
     F -.aggregate outcomes.-> J
-```
 
 <details>
 <summary><b>🔎 Step-by-step walkthrough</b></summary>
@@ -170,6 +183,10 @@ Aggregate accountability metrics are published at `/transparency` with k-anonymi
 
 ## 🚀 Getting Started
 
+Hosted Demo
+- Frontend: https://provora.vercel.app
+- API Health: https://provora.onrender.com/health
+
 ```bash
 # 1. Install dependencies (pnpm workspace)
 pnpm install
@@ -194,6 +211,29 @@ pnpm --filter web dev                      # → http://localhost:3000
 > 💡 The scoring and realtime services are **optional** for the MVP — the API falls back to a local explanation builder when scoring is unreachable.
 
 📦 Production deployment: [`docs/DEPLOY.md`](docs/DEPLOY.md) · Feature deep-dives: [`docs/`](docs/)
+
+## 🚢 Deployment
+
+### Hosting Layout
+- Frontend (apps/web) → Vercel
+- API (services/api) → Render
+- Postgres → Supabase
+
+### Frontend Environment Variables
+- NEXT_PUBLIC_API_URL
+
+### API Environment Variables
+- DATABASE_URL
+- JWT_SECRET
+- PLATFORM_ENCRYPTION_KEY
+- PLATFORM_PRIVATE_KEY
+- PLATFORM_DID
+- DEV_AUTH_SECRET
+- PUBLIC_BASE_URL
+- FRONTEND_URL
+- NODE_ENV
+- K_ANONYMITY
+- ALLOW_DEV_TOKEN
 
 ## 📄 License
 
