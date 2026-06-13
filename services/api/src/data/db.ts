@@ -8,7 +8,7 @@ let pool: Pool | undefined
 export function getPool(): Pool {
   if (!pool) {
     pool = new Pool({ connectionString: config.databaseUrl, max: 10 })
-    pool.on('error', (err) => {
+    pool.on('error', (err: Error) => {
       // Log unexpected idle-client errors; don't crash the process.
       // eslint-disable-next-line no-console
       console.error('Postgres pool error:', err)
